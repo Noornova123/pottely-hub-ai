@@ -1,0 +1,96 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Star, Sparkles } from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { AppShell } from "@/components/app-shell";
+import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
+import { reviewRequests, ratingTrend } from "@/lib/mock-data";
+
+export const Route = createFileRoute("/reviews")({
+  component: ReviewsPage,
+});
+
+const tone: Record<string, "success" | "warning" | "default"> = {
+  Posted: "success",
+  Clicked: "default",
+  Opened: "warning",
+};
+
+function ReviewsPage() {
+  return (
+    <AppShell title="Google Reviews">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="p-5">
+          <div className="text-xs text-muted-foreground font-medium">Current Google Rating</div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="text-4xl font-bold">4.6</div>
+            <div className="flex text-gold">
+              {[1,2,3,4,5].map((i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">312</span> total reviews · <span className="text-emerald-600 font-semibold">+18 this month</span>
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader title="Rating trend" description="12-month rating & review volume" />
+          <CardBody className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={ratingTrend} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
+                <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--color-muted-foreground)" />
+                <YAxis domain={[3.8, 5]} tick={{ fontSize: 11 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} />
+                <Line type="monotone" dataKey="rating" stroke="var(--color-gold)" strokeWidth={2.5} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3 mt-6">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Review requests" description="Recent outreach" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground bg-muted/40">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Customer</th>
+                  <th className="px-5 py-3 font-medium">Date Sent</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviewRequests.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-5 py-3 font-medium">{r.customer}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{r.sent}</td>
+                    <td className="px-5 py-3"><Badge tone={tone[r.status]}>{r.status}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Generate review draft" action={<Sparkles className="h-4 w-4 text-gold" />} />
+          <CardBody className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Suggest a review draft your customer can personalize before posting.
+            </p>
+            <div className="rounded-lg bg-muted/40 p-3 text-sm">
+              "Had a wonderful dinner at Spice Route Kitchen last weekend. The paneer tikka was
+              perfectly smoky and the staff was warm and attentive. Loved the cozy ambience — will
+              definitely be back with friends. ⭐⭐⭐⭐⭐"
+            </div>
+            <div className="flex gap-2">
+              <button className="flex-1 h-10 rounded-lg border border-border text-xs font-semibold">Regenerate</button>
+              <button className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">Send to customer</button>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    </AppShell>
+  );
+}
