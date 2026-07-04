@@ -77,14 +77,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "POTTELY — AI Growth Platform for Local Businesses" },
+      { name: "description", content: "POTTELY is the all-in-one AI growth platform for restaurants, salons, clinics, gyms and retail — marketing, retention, social, loyalty and operations in one dashboard." },
+      { property: "og:title", content: "POTTELY — AI Growth Platform" },
+      { property: "og:description", content: "Marketing, retention, social media, loyalty and operations for local businesses — powered by AI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
