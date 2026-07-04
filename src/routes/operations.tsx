@@ -76,8 +76,8 @@ function OperationsPage() {
               <div key={d} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center py-2">{d}</div>
             ))}
             {hours.map((h) => (
-              <>
-                <div key={h} className="text-xs text-muted-foreground py-2 pr-2 text-right">{h}</div>
+              <Fragment key={h}>
+                <div className="text-xs text-muted-foreground py-2 pr-2 text-right">{h}</div>
                 {days.map((d) => {
                   const b = bookings.find((x) => x.day === d && x.time === h);
                   return (
