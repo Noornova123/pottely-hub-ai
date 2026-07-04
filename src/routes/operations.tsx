@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Plus, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, Badge } from "@/components/ui-kit";
@@ -91,7 +91,7 @@ function OperationsPage() {
                     </div>
                   );
                 })}
-              </>
+              </Fragment>
             ))}
           </div>
         </div>
