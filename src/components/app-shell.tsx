@@ -26,7 +26,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const { business } = useData();
   const navigate = useNavigate();
 
-  if (!user) return <Navigate to="/auth" />;
+  useEffect(() => {
+    if (!user) navigate({ to: "/auth", replace: true });
+  }, [user, navigate]);
+  if (!user) return null;
 
   const handleSignOut = () => {
     logout();
