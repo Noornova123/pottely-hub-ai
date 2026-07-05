@@ -33,7 +33,7 @@ function OperationsPage() {
             }
           />
           <div className="divide-y divide-border">
-            {staff.map((s) => (
+            {staffList.map((s) => (
               <div key={s.id} className="p-4 flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                   {s.name.charAt(0)}
