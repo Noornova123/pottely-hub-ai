@@ -26,6 +26,9 @@ const draftVariations = [
 ];
 
 function ReviewsPage() {
+  const { reviewRequests, addReviewRequest, customers } = useData();
+  const [variant, setVariant] = useState(0);
+  const [target, setTarget] = useState(customers[0]?.name || "");
   return (
     <AppShell title="Google Reviews">
       <div className="grid gap-4 lg:grid-cols-3">
