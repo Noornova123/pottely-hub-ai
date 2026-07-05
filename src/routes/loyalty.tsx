@@ -1,14 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { loyaltyTiers, offers } from "@/lib/mock-data";
+import { loyaltyTiers } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/loyalty")({
   component: LoyaltyPage,
 });
 
+const suggestions = [
+  { segment: "Gold tier · Inactive 21-45 days", name: "Free dessert + 15% off", type: "Combo", reason: "Avg spend ₹1,240 · 82% redeem free-dessert offers.", winback: 31 },
+  { segment: "Silver tier · Weekends only", name: "Buy 1 Main Get 1 Free", type: "BOGO", reason: "Weekend Silver members visit 2.4x when BOGO runs.", winback: 26 },
+  { segment: "Platinum · Birthdays this month", name: "Complimentary chef's tasting", type: "Gift", reason: "Platinum birthday recipients bring 3.1 guests on average.", winback: 44 },
+  { segment: "Lost customers · 90+ days", name: "₹300 cashback on ₹999", type: "Cashback", reason: "Cashback wins back 18% of lapsed customers in this segment.", winback: 18 },
+];
+
 function LoyaltyPage() {
+  const { offers, launchOffer } = useData();
+  const [suggestIdx, setSuggestIdx] = useState(0);
+  const s = suggestions[suggestIdx];
+
   return (
     <AppShell title="Loyalty & Offers">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -56,16 +70,22 @@ function LoyaltyPage() {
           <CardHeader title="AI Offer Suggestion" action={<Sparkles className="h-4 w-4 text-gold" />} />
           <CardBody className="space-y-3">
             <div className="text-xs text-muted-foreground">Segment</div>
-            <div className="font-semibold">Gold tier · Inactive 21-45 days</div>
+            <div className="font-semibold">{s.segment}</div>
             <div className="rounded-lg bg-muted/40 p-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Suggested offer</div>
-              <div className="mt-1 font-bold text-primary">Free dessert + 15% off</div>
+              <div className="mt-1 font-bold text-primary">{s.name}</div>
               <p className="text-xs text-muted-foreground mt-2">
-                Reasoning: This segment has an avg spend of ₹1,240 and 82% redeem free-dessert offers.
-                Expected win-back rate: <span className="font-semibold text-emerald-600">31%</span>.
+                Reasoning: {s.reason} Expected win-back rate: <span className="font-semibold text-emerald-600">{s.winback}%</span>.
               </p>
             </div>
-            <button className="w-full h-10 rounded-lg bg-gold text-gold-foreground text-sm font-semibold">
+            <button
+              onClick={() => {
+                launchOffer({ name: s.name, type: s.type });
+                toast.success(`Launched "${s.name}"`);
+                setSuggestIdx((i) => (i + 1) % suggestions.length);
+              }}
+              className="w-full h-10 rounded-lg bg-gold text-gold-foreground text-sm font-semibold"
+            >
               Launch offer
             </button>
           </CardBody>
