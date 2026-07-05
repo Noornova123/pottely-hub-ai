@@ -1,5 +1,5 @@
-import { Link, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, Megaphone, Instagram, Gift, Star,
   Briefcase, BarChart3, Settings, Bell, Menu, X, Sparkles, LogOut,
