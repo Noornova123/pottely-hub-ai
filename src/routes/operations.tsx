@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, Fragment } from "react";
 import { Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, Badge } from "@/components/ui-kit";
-import { staff, bills, bookings } from "@/lib/mock-data";
+import { bills, bookings } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/operations")({
   component: OperationsPage,
@@ -13,7 +15,11 @@ const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = ["09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00"];
 
 function OperationsPage() {
+  const { staffList, addStaff } = useData();
   const [show, setShow] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("Employee");
   return (
     <AppShell title="Business Operations">
       <div className="grid gap-4 lg:grid-cols-2">
