@@ -23,13 +23,11 @@ const AUTH_KEY = "pottely.auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(AUTH_KEY) : null;
+      const raw = window.localStorage.getItem(AUTH_KEY);
       if (raw) setUser(JSON.parse(raw));
     } catch {}
-    setReady(true);
   }, []);
   const value = useMemo<AuthCtx>(() => ({
     user,
@@ -43,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { window.localStorage.removeItem(AUTH_KEY); } catch {}
     },
   }), [user]);
-  if (!ready) return null;
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
