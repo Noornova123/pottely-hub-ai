@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Instagram, Facebook, Sparkles, Plus, X } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { socialPosts, engagementTrend } from "@/lib/mock-data";
+import { engagementTrend } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/social")({
   component: SocialPage,
@@ -12,8 +14,34 @@ export const Route = createFileRoute("/social")({
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const aiVariations = [
+  {
+    caption: "🍳 Weekend brunch is back! Fluffy pancakes, filter coffee & 20% off till Sunday noon. Tag a friend who needs this ✨",
+    concept: "Overhead shot of pancakes with maple syrup drizzle, warm morning light, soft focus.",
+  },
+  {
+    caption: "Rainy day = biryani day 🌧️ Get our signature dum biryani with a free gulab jamun this weekend only.",
+    concept: "Steaming biryani handi opened at the table, moody warm lighting, close-up steam.",
+  },
+  {
+    caption: "Date night, sorted 💛 Two-course tasting menu + a glass of wine at ₹1,499 for two. Book by Friday.",
+    concept: "Two hands clinking wine glasses over candlelit table, shallow depth of field.",
+  },
+  {
+    caption: "Meet the team behind the magic ✨ Chef Rohan shares his monsoon menu inspiration — swipe to see.",
+    concept: "Chef portrait in the kitchen, natural light from the pass window, authentic behind-the-scenes vibe.",
+  },
+];
+
 function SocialPage() {
+  const { socialPosts, addSocialPost } = useData();
   const [show, setShow] = useState(false);
+  const [variant, setVariant] = useState(0);
+  const [day, setDay] = useState("Mon");
+  const [channel, setChannel] = useState<"Instagram" | "Facebook">("Instagram");
+  const [time, setTime] = useState("10:00");
+
+  const current = aiVariations[variant];
   return (
     <AppShell title="Social Media">
       {/* Connected accounts */}
