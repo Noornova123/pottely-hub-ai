@@ -92,14 +92,26 @@ function ReviewsPage() {
             <p className="text-xs text-muted-foreground">
               Suggest a review draft your customer can personalize before posting.
             </p>
-            <div className="rounded-lg bg-muted/40 p-3 text-sm">
-              "Had a wonderful dinner at Spice Route Kitchen last weekend. The paneer tikka was
-              perfectly smoky and the staff was warm and attentive. Loved the cozy ambience — will
-              definitely be back with friends. ⭐⭐⭐⭐⭐"
+            <div>
+              <label className="block text-xs font-medium mb-1">Send to</label>
+              <select value={target} onChange={(e) => setTarget(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
+                {customers.slice(0, 20).map((c) => <option key={c.id}>{c.name}</option>)}
+              </select>
             </div>
+            <div className="rounded-lg bg-muted/40 p-3 text-sm">{draftVariations[variant]}</div>
             <div className="flex gap-2">
-              <button className="flex-1 h-10 rounded-lg border border-border text-xs font-semibold">Regenerate</button>
-              <button className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">Send to customer</button>
+              <button
+                onClick={() => setVariant((v) => (v + 1) % draftVariations.length)}
+                className="flex-1 h-10 rounded-lg border border-border text-xs font-semibold"
+              >Regenerate</button>
+              <button
+                onClick={() => {
+                  if (!target) { toast.error("Pick a customer"); return; }
+                  addReviewRequest(target);
+                  toast.success(`Review draft sent to ${target}`);
+                }}
+                className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
+              >Send to customer</button>
             </div>
           </CardBody>
         </Card>
