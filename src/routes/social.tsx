@@ -153,15 +153,44 @@ function SocialPage() {
                 <label className="block text-xs font-medium mb-1">Occasion or offer</label>
                 <input defaultValue="Weekend brunch — 20% off" className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
               </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Day</label>
+                  <select value={day} onChange={(e) => setDay(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-2 text-sm">
+                    {days.map((d) => <option key={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Time</label>
+                  <input value={time} onChange={(e) => setTime(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Channel</label>
+                  <select value={channel} onChange={(e) => setChannel(e.target.value as "Instagram" | "Facebook")} className="w-full h-10 rounded-lg border border-input bg-background px-2 text-sm">
+                    <option>Instagram</option><option>Facebook</option>
+                  </select>
+                </div>
+              </div>
               <div className="rounded-lg bg-muted/60 p-4">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Suggested caption</div>
-                <p className="mt-2 text-sm">🍳 Weekend brunch is back! Fluffy pancakes, filter coffee & 20% off till Sunday noon. Tag a friend who needs this ✨</p>
+                <p className="mt-2 text-sm">{current.caption}</p>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mt-4">Image concept</div>
-                <p className="mt-2 text-sm">Overhead shot of pancakes with maple syrup drizzle, warm morning light, soft focus.</p>
+                <p className="mt-2 text-sm">{current.concept}</p>
               </div>
               <div className="flex gap-2">
-                <button className="flex-1 h-10 rounded-lg border border-border text-sm font-semibold">Regenerate</button>
-                <button className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Schedule</button>
+                <button
+                  onClick={() => setVariant((v) => (v + 1) % aiVariations.length)}
+                  className="flex-1 h-10 rounded-lg border border-border text-sm font-semibold"
+                >Regenerate</button>
+                <button
+                  onClick={() => {
+                    addSocialPost({ day, time, channel, caption: current.caption, status: "Scheduled" });
+                    toast.success(`Post scheduled for ${day} at ${time}`);
+                    setShow(false);
+                    setVariant(0);
+                  }}
+                  className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold"
+                >Schedule</button>
               </div>
             </div>
           </div>
