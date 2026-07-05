@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Star, Sparkles } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { reviewRequests, ratingTrend } from "@/lib/mock-data";
+import { ratingTrend } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/reviews")({
   component: ReviewsPage,
@@ -14,6 +17,13 @@ const tone: Record<string, "success" | "warning" | "default"> = {
   Clicked: "default",
   Opened: "warning",
 };
+
+const draftVariations = [
+  `"Had a wonderful dinner at Spice Route Kitchen last weekend. The paneer tikka was perfectly smoky and the staff was warm and attentive. Loved the cozy ambience — will definitely be back with friends. ⭐⭐⭐⭐⭐"`,
+  `"Absolutely loved the weekend brunch! Pancakes were fluffy, the filter coffee hit just right, and the service was quick. Great value too. Highly recommend for a lazy Sunday. ⭐⭐⭐⭐⭐"`,
+  `"Went for a birthday celebration and the team made it super special. Chef sent out a complimentary dessert and the biryani was outstanding. Warm hospitality — 10/10. ⭐⭐⭐⭐⭐"`,
+  `"Consistent quality every visit. Fresh ingredients, clean space and a menu that has something for everyone. Our go-to spot for family dinners. ⭐⭐⭐⭐⭐"`,
+];
 
 function ReviewsPage() {
   return (
