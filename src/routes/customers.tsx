@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Search, Plus, X, Pencil } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { customers, type Customer, type CustomerStatus, type LoyaltyTier } from "@/lib/mock-data";
+import { Card, Badge } from "@/components/ui-kit";
+import { type Customer, type CustomerStatus, type LoyaltyTier } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/customers")({
   component: CustomersPage,
@@ -17,12 +19,28 @@ const statusTone: Record<CustomerStatus, "success" | "default" | "gold" | "warni
   Lost: "danger",
 };
 
+type FormShape = {
+  name: string; phone: string; email: string; birthday: string; anniversary: string;
+};
+const emptyForm: FormShape = { name: "", phone: "", email: "", birthday: "", anniversary: "" };
+
 function CustomersPage() {
+  const { customers, addCustomer, updateCustomer } = useData();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"All" | CustomerStatus>("All");
   const [tier, setTier] = useState<"All" | LoyaltyTier>("All");
   const [selected, setSelected] = useState<Customer | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showForm, setShowForm] = useState<null | { mode: "add" } | { mode: "edit"; id: string }>(null);
+  const [form, setForm] = useState<FormShape>(emptyForm);
+
+  useEffect(() => {
+    if (showForm?.mode === "edit") {
+      const c = customers.find((x) => x.id === showForm.id);
+      if (c) setForm({ name: c.name, phone: c.phone, email: c.email, birthday: c.birthday, anniversary: c.anniversary });
+    } else if (showForm?.mode === "add") {
+      setForm(emptyForm);
+    }
+  }, [showForm, customers]);
 
   const filtered = useMemo(() =>
     customers.filter((c) =>
@@ -30,7 +48,20 @@ function CustomersPage() {
       (tier === "All" || c.tier === tier) &&
       (q === "" || c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q)),
     ),
-  [q, status, tier]);
+  [customers, q, status, tier]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    if (showForm?.mode === "edit") {
+      updateCustomer(showForm.id, form);
+      toast.success(`Updated ${form.name}`);
+    } else {
+      addCustomer(form);
+      toast.success(`${form.name} added to customers`);
+    }
+    setShowForm(null);
+  };
 
   return (
     <AppShell title="Customers">
@@ -45,22 +76,14 @@ function CustomersPage() {
               className="w-full h-10 pl-10 pr-3 rounded-lg border border-input bg-background text-sm"
             />
           </div>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as CustomerStatus | "All")}
-            className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
-          >
+          <select value={status} onChange={(e) => setStatus(e.target.value as CustomerStatus | "All")} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
             {["All", "New", "Active", "VIP", "Inactive", "Lost"].map((s) => <option key={s}>{s}</option>)}
           </select>
-          <select
-            value={tier}
-            onChange={(e) => setTier(e.target.value as LoyaltyTier | "All")}
-            className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
-          >
+          <select value={tier} onChange={(e) => setTier(e.target.value as LoyaltyTier | "All")} className="h-10 rounded-lg border border-input bg-background px-3 text-sm">
             {["All", "Silver", "Gold", "Platinum", "VIP"].map((s) => <option key={s}>{s}</option>)}
           </select>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => setShowForm({ mode: "add" })}
             className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2"
           >
             <Plus className="h-4 w-4" /> Add Customer
@@ -77,38 +100,39 @@ function CustomersPage() {
                 <th className="px-5 py-3 font-medium">Total Spend</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Loyalty Tier</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => setSelected(c)}
-                  className="border-t border-border cursor-pointer hover:bg-muted/40"
-                >
-                  <td className="px-5 py-3 font-medium">{c.name}</td>
+                <tr key={c.id} className="border-t border-border hover:bg-muted/40">
+                  <td className="px-5 py-3 font-medium cursor-pointer" onClick={() => setSelected(c)}>{c.name}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.phone}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.lastVisit}</td>
                   <td className="px-5 py-3 font-semibold">₹{c.totalSpend.toLocaleString()}</td>
                   <td className="px-5 py-3"><Badge tone={statusTone[c.status]}>{c.status}</Badge></td>
                   <td className="px-5 py-3"><Badge tone="muted">{c.tier}</Badge></td>
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      onClick={() => setShowForm({ mode: "edit", id: c.id })}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-5 py-10 text-center text-muted-foreground text-sm">No customers match your filters.</td></tr>
+                <tr><td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">No customers match your filters.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
 
-      {/* Detail drawer */}
       {selected && (
         <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setSelected(null)}>
-          <aside
-            onClick={(e) => e.stopPropagation()}
-            className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-card overflow-y-auto"
-          >
+          <aside onClick={(e) => e.stopPropagation()} className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-card overflow-y-auto">
             <div className="p-5 border-b border-border flex items-start justify-between">
               <div>
                 <h2 className="font-bold text-lg">{selected.name}</h2>
@@ -120,13 +144,11 @@ function CustomersPage() {
               </div>
               <button onClick={() => setSelected(null)}><X className="h-5 w-5" /></button>
             </div>
-
             <div className="p-5 grid grid-cols-3 gap-3">
               <Stat label="Total Spend" value={`₹${selected.totalSpend.toLocaleString()}`} />
               <Stat label="Visits" value={String(selected.visits)} />
               <Stat label="Points" value={String(selected.points)} />
             </div>
-
             <Section title="Personal">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <KV k="Birthday" v={selected.birthday} />
@@ -135,9 +157,9 @@ function CustomersPage() {
                 <KV k="Loyalty tier" v={selected.tier} />
               </div>
             </Section>
-
             <Section title="Purchase history">
               <div className="space-y-2">
+                {selected.history.length === 0 && <p className="text-sm text-muted-foreground">No history yet.</p>}
                 {selected.history.map((h, i) => (
                   <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/40">
                     <div>
@@ -149,33 +171,39 @@ function CustomersPage() {
                 ))}
               </div>
             </Section>
-
             <Section title="Notes">
-              <p className="text-sm text-muted-foreground">
-                {selected.notes || "No notes yet."}
-              </p>
+              <p className="text-sm text-muted-foreground">{selected.notes || "No notes yet."}</p>
             </Section>
+            <div className="p-5 border-t border-border">
+              <button
+                onClick={() => { setShowForm({ mode: "edit", id: selected.id }); setSelected(null); }}
+                className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold"
+              >Edit customer</button>
+            </div>
           </aside>
         </div>
       )}
 
-      {/* Add modal */}
-      {showAdd && (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4" onClick={() => setShowAdd(false)}>
+      {showForm && (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4" onClick={() => setShowForm(null)}>
           <div className="bg-card rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg">Add Customer</h3>
-              <button onClick={() => setShowAdd(false)}><X className="h-5 w-5" /></button>
+              <h3 className="font-bold text-lg">{showForm.mode === "edit" ? "Edit customer" : "Add customer"}</h3>
+              <button onClick={() => setShowForm(null)}><X className="h-5 w-5" /></button>
             </div>
-            <form className="mt-4 space-y-3" onSubmit={(e) => { e.preventDefault(); setShowAdd(false); }}>
-              {["Name", "Phone", "Email", "Birthday", "Anniversary"].map((f) => (
+            <form className="mt-4 space-y-3" onSubmit={submit}>
+              {(["name","phone","email","birthday","anniversary"] as const).map((f) => (
                 <div key={f}>
-                  <label className="block text-xs font-medium mb-1">{f}</label>
-                  <input className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
+                  <label className="block text-xs font-medium mb-1 capitalize">{f}</label>
+                  <input
+                    value={form[f]}
+                    onChange={(e) => setForm({ ...form, [f]: e.target.value })}
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                  />
                 </div>
               ))}
               <button type="submit" className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm mt-2">
-                Save Customer
+                {showForm.mode === "edit" ? "Save changes" : "Save Customer"}
               </button>
             </form>
           </div>
