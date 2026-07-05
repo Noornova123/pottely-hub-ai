@@ -1,21 +1,65 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { campaigns } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/campaigns")({
   component: CampaignsPage,
 });
 
+const triggers = ["15", "30", "45", "60", "90"];
+const offers = ["Discount", "Free Gift", "Festival Offer", "Birthday Offer"];
+
+function offerText(o: string) {
+  return o === "Discount" ? "20% off" : o === "Free Gift" ? "a complimentary dessert" : o === "Birthday Offer" ? "a birthday surprise 🎂" : "a special festival treat 🎉";
+}
+
 function CampaignsPage() {
+  const { campaigns, addCampaign, updateCampaign, runCampaign } = useData();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
   const [trigger, setTrigger] = useState("30");
   const [offer, setOffer] = useState("Discount");
 
-  const previewMsg = `Hi {{name}}, we've missed you! Enjoy ${
-    offer === "Discount" ? "20% off" : offer === "Free Gift" ? "a complimentary dessert" : offer === "Birthday Offer" ? "a birthday surprise 🎂" : "a special festival treat 🎉"
-  } on your next visit within 7 days. — Spice Route Kitchen`;
+  const previewMsg = `Hi {{name}}, we've missed you! Enjoy ${offerText(offer)} on your next visit within 7 days. — Spice Route Kitchen`;
+
+  const resetForm = () => { setEditingId(null); setName(""); setTrigger("30"); setOffer("Discount"); };
+
+  const startEdit = (id: string) => {
+    const c = campaigns.find((x) => x.id === id);
+    if (!c) return;
+    setEditingId(id);
+    setName(c.name);
+    const t = c.trigger.match(/\d+/)?.[0] || "30";
+    setTrigger(t);
+    const matched = offers.find((o) => c.offer.toLowerCase().includes(o.split(" ")[0].toLowerCase()));
+    setOffer(matched || "Discount");
+  };
+
+  const submit = () => {
+    const finalName = name.trim() || `${trigger}-day ${offer}`;
+    const payload = {
+      name: finalName,
+      trigger: `Inactive ${trigger} days`,
+      offer: offerText(offer),
+    };
+    if (editingId) {
+      updateCampaign(editingId, payload);
+      toast.success(`Updated "${finalName}"`);
+    } else {
+      addCampaign(payload);
+      toast.success(`Campaign "${finalName}" created`);
+    }
+    resetForm();
+  };
+
+  const handleRun = (id: string) => {
+    const count = runCampaign(id);
+    toast.success(`Campaign sent to ${count} customers`);
+  };
 
   return (
     <AppShell title="Retention Campaigns">
@@ -24,7 +68,7 @@ function CampaignsPage() {
           <CardHeader title="Active campaigns" description="Automated rules currently running" />
           <div className="divide-y divide-border">
             {campaigns.map((c) => (
-              <div key={c.id} className="p-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] items-center">
+              <div key={c.id} className={`p-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] items-center ${editingId === c.id ? "bg-primary/5" : ""}`}>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-semibold">{c.name}</h4>
@@ -37,8 +81,8 @@ function CampaignsPage() {
                   <p className="text-xs mt-1"><span className="font-semibold text-primary">{c.matched}</span> customers currently matched</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border">Edit</button>
-                  <button className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground">Run now</button>
+                  <button onClick={() => startEdit(c.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border">Edit</button>
+                  <button onClick={() => handleRun(c.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground">Run now</button>
                 </div>
               </div>
             ))}
@@ -46,23 +90,25 @@ function CampaignsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="Campaign builder" action={<Sparkles className="h-4 w-4 text-gold" />} />
+          <CardHeader title={editingId ? "Edit campaign" : "Campaign builder"} action={<Sparkles className="h-4 w-4 text-gold" />} />
           <CardBody className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium mb-1.5">Campaign name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Weekend Winback"
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
+            </div>
             <div>
               <label className="block text-xs font-medium mb-1.5">Trigger — inactive days</label>
               <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
-                {["15", "30", "45", "60", "90"].map((d) => <option key={d} value={d}>{d} days</option>)}
+                {triggers.map((d) => <option key={d} value={d}>{d} days</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5">Offer type</label>
               <div className="grid grid-cols-2 gap-2">
-                {["Discount", "Free Gift", "Festival Offer", "Birthday Offer"].map((o) => (
-                  <button
-                    key={o}
-                    onClick={() => setOffer(o)}
-                    className={`text-xs px-3 py-2 rounded-lg border ${offer === o ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
-                  >{o}</button>
+                {offers.map((o) => (
+                  <button key={o} onClick={() => setOffer(o)}
+                    className={`text-xs px-3 py-2 rounded-lg border ${offer === o ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>{o}</button>
                 ))}
               </div>
             </div>
@@ -70,9 +116,14 @@ function CampaignsPage() {
               <label className="block text-xs font-medium mb-1.5">Preview message</label>
               <div className="rounded-lg bg-muted/60 p-3 text-sm">{previewMsg}</div>
             </div>
-            <button className="w-full h-10 rounded-lg bg-gold text-gold-foreground font-semibold text-sm">
-              Create campaign
-            </button>
+            <div className="flex gap-2">
+              {editingId && (
+                <button onClick={resetForm} className="flex-1 h-10 rounded-lg border border-border text-sm font-semibold">Cancel</button>
+              )}
+              <button onClick={submit} className="flex-1 h-10 rounded-lg bg-gold text-gold-foreground font-semibold text-sm">
+                {editingId ? "Save changes" : "Create campaign"}
+              </button>
+            </div>
           </CardBody>
         </Card>
       </div>
@@ -99,7 +150,7 @@ function CampaignsPage() {
                   <td className="px-5 py-3">{c.opened}</td>
                   <td className="px-5 py-3">{c.redeemed}</td>
                   <td className="px-5 py-3">{c.returned}</td>
-                  <td className="px-5 py-3 font-semibold text-emerald-600">{Math.round((c.returned / c.sent) * 100)}%</td>
+                  <td className="px-5 py-3 font-semibold text-emerald-600">{c.sent ? Math.round((c.returned / c.sent) * 100) : 0}%</td>
                 </tr>
               ))}
             </tbody>

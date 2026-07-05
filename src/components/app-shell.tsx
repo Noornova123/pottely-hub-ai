@@ -1,10 +1,11 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, Megaphone, Instagram, Gift, Star,
-  Briefcase, BarChart3, Settings, Bell, Menu, X, Sparkles,
+  Briefcase, BarChart3, Settings, Bell, Menu, X, Sparkles, LogOut,
 } from "lucide-react";
-import { business } from "@/lib/mock-data";
+import { useAuth, useData } from "@/lib/app-store";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +22,20 @@ const nav = [
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, logout } = useAuth();
+  const { business } = useData();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) navigate({ to: "/auth", replace: true });
+  }, [user, navigate]);
+  if (!user) return null;
+
+  const handleSignOut = () => {
+    logout();
+    toast.success("Signed out");
+    navigate({ to: "/auth", replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -110,13 +125,21 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               </button>
               <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-border">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                  {business.name.charAt(0)}
+                  {(user.name || business.name).charAt(0).toUpperCase()}
                 </div>
                 <div className="text-xs">
-                  <div className="font-semibold">Ravi Kumar</div>
-                  <div className="text-muted-foreground">Owner</div>
+                  <div className="font-semibold capitalize">{user.name}</div>
+                  <div className="text-muted-foreground truncate max-w-[140px]">{user.email}</div>
                 </div>
               </div>
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-muted transition-colors"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </header>

@@ -1,17 +1,43 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart,
+  ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Area, AreaChart,
 } from "recharts";
-import { Sparkles, ArrowUpRight, TrendingUp, Repeat } from "lucide-react";
+import { Sparkles, ArrowUpRight, TrendingUp, Repeat, Check } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Metric } from "@/components/ui-kit";
 import { dashboardMetrics, aiSuggestions, revenueTrend } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
 function Dashboard() {
+  const { addCampaign, addReviewRequest, customers } = useData();
+  const [handled, setHandled] = useState<Record<string, number>>({});
+
+  const handleSuggestion = (s: typeof aiSuggestions[number]) => {
+    if (handled[s.id]) { toast.info(`${s.action} — already applied`); return; }
+    if (s.action === "Run Campaign") {
+      addCampaign({ name: "Weekend Winback", trigger: "Inactive 30 days", offer: "20% off next visit" });
+      toast.success("Campaign launched · sent to 45 customers");
+      setHandled((h) => ({ ...h, [s.id]: 45 }));
+    } else if (s.action === "Send Requests") {
+      customers.slice(0, 20).forEach((c) => addReviewRequest(c.name));
+      toast.success("Review requests sent to 20 customers");
+      setHandled((h) => ({ ...h, [s.id]: 20 }));
+    } else if (s.action === "Send Offers") {
+      toast.success("Birthday offers sent to 4 customers");
+      setHandled((h) => ({ ...h, [s.id]: 4 }));
+    } else if (s.action === "Review Draft") {
+      addCampaign({ name: "Diwali Festival Campaign", trigger: "All active customers", offer: "Diwali festival treat 🎉" });
+      toast.success("Diwali draft approved & scheduled for 890 customers");
+      setHandled((h) => ({ ...h, [s.id]: 890 }));
+    }
+  };
+
   return (
     <AppShell title="Dashboard">
       {/* Metrics */}
@@ -66,15 +92,27 @@ function Dashboard() {
             action={<Sparkles className="h-4 w-4 text-gold" />}
           />
           <CardBody className="space-y-3">
-            {aiSuggestions.map((s) => (
-              <div key={s.id} className="p-3 rounded-lg border border-border bg-background">
-                <div className="text-sm font-semibold">{s.title}</div>
-                <p className="text-xs text-muted-foreground mt-1">{s.detail}</p>
-                <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                  {s.action} <ArrowUpRight className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
+            {aiSuggestions.map((s) => {
+              const done = handled[s.id];
+              return (
+                <div key={s.id} className="p-3 rounded-lg border border-border bg-background">
+                  <div className="text-sm font-semibold">{s.title}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{s.detail}</p>
+                  {done ? (
+                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                      <Check className="h-3 w-3" /> Applied · {done} customers
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSuggestion(s)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      {s.action} <ArrowUpRight className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </CardBody>
         </Card>
       </div>

@@ -1,6 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "@/lib/app-store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -10,7 +12,12 @@ const categories = ["Restaurant", "Salon", "Clinic", "Gym", "Retail", "Other"];
 
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("demo@pottely.com");
+  const [password, setPassword] = useState("demo1234");
   const navigate = useNavigate();
+  const { user, login } = useAuth();
+
+  if (user) return <Navigate to="/" />;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -73,6 +80,12 @@ function AuthPage() {
             className="mt-8 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!email || !password) {
+                toast.error("Enter an email and password");
+                return;
+              }
+              login(email, password);
+              toast.success(mode === "login" ? "Welcome back!" : "Account created");
               navigate({ to: "/" });
             }}
           >
@@ -90,8 +103,18 @@ function AuthPage() {
                 </div>
               </>
             )}
-            <Field label="Email" type="email" placeholder="you@business.com" />
-            <Field label="Password" type="password" placeholder="••••••••" />
+            <Field
+              label="Email" type="email" placeholder="you@business.com"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+            <Field
+              label="Password" type="password" placeholder="••••••••"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <p className="text-[11px] text-muted-foreground">
+              Demo mode — any email &amp; password combo works.
+            </p>
 
             <button
               type="submit"

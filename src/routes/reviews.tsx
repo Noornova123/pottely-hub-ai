@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Star, Sparkles } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { reviewRequests, ratingTrend } from "@/lib/mock-data";
+import { ratingTrend } from "@/lib/mock-data";
+import { useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/reviews")({
   component: ReviewsPage,
@@ -15,7 +18,17 @@ const tone: Record<string, "success" | "warning" | "default"> = {
   Opened: "warning",
 };
 
+const draftVariations = [
+  `"Had a wonderful dinner at Spice Route Kitchen last weekend. The paneer tikka was perfectly smoky and the staff was warm and attentive. Loved the cozy ambience — will definitely be back with friends. ⭐⭐⭐⭐⭐"`,
+  `"Absolutely loved the weekend brunch! Pancakes were fluffy, the filter coffee hit just right, and the service was quick. Great value too. Highly recommend for a lazy Sunday. ⭐⭐⭐⭐⭐"`,
+  `"Went for a birthday celebration and the team made it super special. Chef sent out a complimentary dessert and the biryani was outstanding. Warm hospitality — 10/10. ⭐⭐⭐⭐⭐"`,
+  `"Consistent quality every visit. Fresh ingredients, clean space and a menu that has something for everyone. Our go-to spot for family dinners. ⭐⭐⭐⭐⭐"`,
+];
+
 function ReviewsPage() {
+  const { reviewRequests, addReviewRequest, customers } = useData();
+  const [variant, setVariant] = useState(0);
+  const [target, setTarget] = useState(customers[0]?.name || "");
   return (
     <AppShell title="Google Reviews">
       <div className="grid gap-4 lg:grid-cols-3">
@@ -79,14 +92,26 @@ function ReviewsPage() {
             <p className="text-xs text-muted-foreground">
               Suggest a review draft your customer can personalize before posting.
             </p>
-            <div className="rounded-lg bg-muted/40 p-3 text-sm">
-              "Had a wonderful dinner at Spice Route Kitchen last weekend. The paneer tikka was
-              perfectly smoky and the staff was warm and attentive. Loved the cozy ambience — will
-              definitely be back with friends. ⭐⭐⭐⭐⭐"
+            <div>
+              <label className="block text-xs font-medium mb-1">Send to</label>
+              <select value={target} onChange={(e) => setTarget(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
+                {customers.slice(0, 20).map((c) => <option key={c.id}>{c.name}</option>)}
+              </select>
             </div>
+            <div className="rounded-lg bg-muted/40 p-3 text-sm">{draftVariations[variant]}</div>
             <div className="flex gap-2">
-              <button className="flex-1 h-10 rounded-lg border border-border text-xs font-semibold">Regenerate</button>
-              <button className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">Send to customer</button>
+              <button
+                onClick={() => setVariant((v) => (v + 1) % draftVariations.length)}
+                className="flex-1 h-10 rounded-lg border border-border text-xs font-semibold"
+              >Regenerate</button>
+              <button
+                onClick={() => {
+                  if (!target) { toast.error("Pick a customer"); return; }
+                  addReviewRequest(target);
+                  toast.success(`Review draft sent to ${target}`);
+                }}
+                className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
+              >Send to customer</button>
             </div>
           </CardBody>
         </Card>
