@@ -80,6 +80,12 @@ function AuthPage() {
             className="mt-8 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!email || !password) {
+                toast.error("Enter an email and password");
+                return;
+              }
+              login(email, password);
+              toast.success(mode === "login" ? "Welcome back!" : "Account created");
               navigate({ to: "/" });
             }}
           >
@@ -97,8 +103,18 @@ function AuthPage() {
                 </div>
               </>
             )}
-            <Field label="Email" type="email" placeholder="you@business.com" />
-            <Field label="Password" type="password" placeholder="••••••••" />
+            <Field
+              label="Email" type="email" placeholder="you@business.com"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+            <Field
+              label="Password" type="password" placeholder="••••••••"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <p className="text-[11px] text-muted-foreground">
+              Demo mode — any email &amp; password combo works.
+            </p>
 
             <button
               type="submit"
