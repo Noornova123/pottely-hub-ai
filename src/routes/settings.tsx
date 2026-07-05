@@ -1,14 +1,44 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Check, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
-import { plans, business } from "@/lib/mock-data";
+import { useAuth, useData } from "@/lib/app-store";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
 function SettingsPage() {
+  const { business, updateBusiness, plans, setCurrentPlan, staffList } = useData();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    name: business.name,
+    category: business.category,
+    phone: "+91 98200 11111",
+    email: "hello@spiceroute.com",
+    address: "12, MG Road, Bengaluru, KA 560001",
+  });
+
+  const save = () => {
+    updateBusiness({ name: form.name, category: form.category });
+    toast.success("Business profile updated");
+  };
+
+  const signOut = () => {
+    logout();
+    toast.success("Signed out");
+    navigate({ to: "/auth", replace: true });
+  };
+
+  const choosePlan = (name: string) => {
+    if (plans.find((p) => p.name === name)?.current) return;
+    setCurrentPlan(name);
+    toast.success(`Switched to ${name} plan`);
+  };
+
   return (
     <AppShell title="Settings & Plans">
       <div className="grid gap-4 lg:grid-cols-3">
@@ -17,28 +47,28 @@ function SettingsPage() {
           <CardBody className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary text-primary-foreground text-2xl font-black">
-                {business.name.charAt(0)}
+                {form.name.charAt(0)}
               </div>
               <button className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-xs font-semibold">
                 <Upload className="h-3.5 w-3.5" /> Upload logo
               </button>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Business name" value={business.name} />
+              <Field label="Business name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
               <div>
                 <label className="block text-xs font-medium mb-1.5">Category</label>
-                <select defaultValue={business.category} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
                   {["Restaurant", "Salon", "Clinic", "Gym", "Retail", "Other"].map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
-              <Field label="Phone" value="+91 98200 11111" />
-              <Field label="Email" value="hello@spiceroute.com" />
+              <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+              <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium mb-1.5">Address</label>
-                <textarea rows={2} defaultValue="12, MG Road, Bengaluru, KA 560001" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+                <textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
               </div>
             </div>
-            <button className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Save changes</button>
+            <button onClick={save} className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Save changes</button>
           </CardBody>
         </Card>
 
@@ -47,17 +77,21 @@ function SettingsPage() {
           <CardBody className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Owner</span>
-              <span className="font-semibold">Ravi Kumar</span>
+              <span className="font-semibold capitalize">{user?.name || "—"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Email</span>
+              <span className="font-semibold truncate max-w-[160px]">{user?.email}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Team members</span>
-              <span className="font-semibold">4</span>
+              <span className="font-semibold">{staffList.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Timezone</span>
               <span className="font-semibold">Asia / Kolkata</span>
             </div>
-            <button className="w-full mt-3 h-10 rounded-lg border border-border text-sm font-semibold">Sign out</button>
+            <button onClick={signOut} className="w-full mt-3 h-10 rounded-lg border border-border text-sm font-semibold hover:bg-muted">Sign out</button>
           </CardBody>
         </Card>
       </div>
@@ -89,12 +123,13 @@ function SettingsPage() {
                 ))}
               </ul>
               <button
+                onClick={() => choosePlan(p.name)}
                 className={`mt-6 w-full h-10 rounded-lg text-sm font-semibold ${
-                  p.current ? "border border-border" : "bg-gold text-gold-foreground"
+                  p.current ? "border border-border cursor-default" : "bg-gold text-gold-foreground hover:opacity-90"
                 }`}
                 disabled={p.current}
               >
-                {p.current ? "Current plan" : "Upgrade"}
+                {p.current ? "Current plan" : `Switch to ${p.name}`}
               </button>
             </Card>
           ))}
@@ -104,11 +139,11 @@ function SettingsPage() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
       <label className="block text-xs font-medium mb-1.5">{label}</label>
-      <input defaultValue={value} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
+      <input value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
     </div>
   );
 }
