@@ -122,13 +122,21 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               </button>
               <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-border">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                  {business.name.charAt(0)}
+                  {(user.name || business.name).charAt(0).toUpperCase()}
                 </div>
                 <div className="text-xs">
-                  <div className="font-semibold">Ravi Kumar</div>
-                  <div className="text-muted-foreground">Owner</div>
+                  <div className="font-semibold capitalize">{user.name}</div>
+                  <div className="text-muted-foreground truncate max-w-[140px]">{user.email}</div>
                 </div>
               </div>
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-muted transition-colors"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </header>
