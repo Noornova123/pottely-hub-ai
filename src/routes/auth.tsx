@@ -1,6 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "@/lib/app-store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -10,7 +12,12 @@ const categories = ["Restaurant", "Salon", "Clinic", "Gym", "Retail", "Other"];
 
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("demo@pottely.com");
+  const [password, setPassword] = useState("demo1234");
   const navigate = useNavigate();
+  const { user, login } = useAuth();
+
+  if (user) return <Navigate to="/" />;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
