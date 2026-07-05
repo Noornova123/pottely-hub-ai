@@ -1,10 +1,11 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, Megaphone, Instagram, Gift, Star,
-  Briefcase, BarChart3, Settings, Bell, Menu, X, Sparkles,
+  Briefcase, BarChart3, Settings, Bell, Menu, X, Sparkles, LogOut,
 } from "lucide-react";
-import { business } from "@/lib/mock-data";
+import { useAuth, useData } from "@/lib/app-store";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
