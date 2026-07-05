@@ -110,12 +110,28 @@ function OperationsPage() {
               <h3 className="font-bold text-lg">Add Staff</h3>
               <button onClick={() => setShow(false)}><X className="h-5 w-5" /></button>
             </div>
-            <form className="mt-4 space-y-3" onSubmit={(e) => { e.preventDefault(); setShow(false); }}>
-              <Field label="Full name" />
-              <Field label="Phone" />
+            <form
+              className="mt-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!name.trim()) { toast.error("Name is required"); return; }
+                addStaff({ name, phone, role });
+                toast.success(`${name} added to your team`);
+                setName(""); setPhone(""); setRole("Employee");
+                setShow(false);
+              }}
+            >
+              <div>
+                <label className="block text-xs font-medium mb-1">Full name</label>
+                <input value={name} onChange={(e) => setName(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Phone</label>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
+              </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Role</label>
-                <select className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
+                <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm">
                   <option>Owner</option><option>Manager</option><option>Employee</option>
                 </select>
               </div>
@@ -125,14 +141,5 @@ function OperationsPage() {
         </div>
       )}
     </AppShell>
-  );
-}
-
-function Field({ label }: { label: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-medium mb-1">{label}</label>
-      <input className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm" />
-    </div>
   );
 }
