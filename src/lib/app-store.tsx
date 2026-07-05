@@ -62,7 +62,7 @@ export type Plan = (typeof seedPlans)[number];
 
 type DataCtx = {
   customers: Customer[];
-  addCustomer: (c: Omit<Customer, "id" | "history" | "points" | "visits" | "totalSpend" | "tier" | "status"> & Partial<Customer>) => Customer;
+  addCustomer: (c: Partial<Customer> & { name: string }) => Customer;
   updateCustomer: (id: string, patch: Partial<Customer>) => void;
 
   campaigns: Campaign[];
