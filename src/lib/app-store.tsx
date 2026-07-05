@@ -66,7 +66,7 @@ type DataCtx = {
   updateCustomer: (id: string, patch: Partial<Customer>) => void;
 
   campaigns: Campaign[];
-  addCampaign: (c: Omit<Campaign, "id" | "sent" | "opened" | "redeemed" | "returned" | "matched" | "status"> & Partial<Campaign>) => Campaign;
+  addCampaign: (c: Partial<Campaign> & { name?: string }) => Campaign;
   updateCampaign: (id: string, patch: Partial<Campaign>) => void;
   runCampaign: (id: string) => number;
 
