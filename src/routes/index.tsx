@@ -92,15 +92,27 @@ function Dashboard() {
             action={<Sparkles className="h-4 w-4 text-gold" />}
           />
           <CardBody className="space-y-3">
-            {aiSuggestions.map((s) => (
-              <div key={s.id} className="p-3 rounded-lg border border-border bg-background">
-                <div className="text-sm font-semibold">{s.title}</div>
-                <p className="text-xs text-muted-foreground mt-1">{s.detail}</p>
-                <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                  {s.action} <ArrowUpRight className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
+            {aiSuggestions.map((s) => {
+              const done = handled[s.id];
+              return (
+                <div key={s.id} className="p-3 rounded-lg border border-border bg-background">
+                  <div className="text-sm font-semibold">{s.title}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{s.detail}</p>
+                  {done ? (
+                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                      <Check className="h-3 w-3" /> Applied · {done} customers
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSuggestion(s)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      {s.action} <ArrowUpRight className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </CardBody>
         </Card>
       </div>
