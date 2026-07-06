@@ -157,11 +157,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     socialPosts,
     addSocialPost: (p) =>
-      setSocialPosts((prev) => [...prev, { ...p, id: nextId("p") }]),
+      setSocialPosts((prev) => [...prev, { image: "", link: "", ...p, id: nextId("p") }]),
+    updateSocialPost: (id, patch) =>
+      setSocialPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p))),
 
     offers,
     launchOffer: (o) =>
-      setOffers((prev) => [{ ...o, id: nextId("o"), status: "Active", redemptions: 0 }, ...prev]),
+      setOffers((prev) => [{
+        description: "", reward: "",
+        ...o,
+        id: nextId("o"),
+        status: o.status || "Active",
+        redemptions: o.redemptions ?? 0,
+      }, ...prev]),
+    updateOffer: (id, patch) =>
+      setOffers((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o))),
 
     staffList,
     addStaff: (s) => setStaffList((prev) => [...prev, { ...s, id: nextId("st") }]),
