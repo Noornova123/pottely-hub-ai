@@ -157,7 +157,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     socialPosts,
     addSocialPost: (p) =>
-      setSocialPosts((prev) => [...prev, { image: "", link: "", ...p, id: nextId("p") }]),
+      setSocialPosts((prev) => [...prev, { image: "", link: "", ...p, id: nextId("p") } as SocialPost]),
     updateSocialPost: (id, patch) =>
       setSocialPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p))),
 
