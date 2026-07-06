@@ -174,10 +174,10 @@ export const loyaltyTiers = [
 ];
 
 export const offers = [
-  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", redemptions: 214, status: "Active" },
-  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", redemptions: 98, status: "Active" },
-  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", redemptions: 141, status: "Active" },
-  { id: "o4", name: "Family Combo ₹899", type: "Combo", redemptions: 76, status: "Paused" },
+  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", description: "20% off every Saturday & Sunday, dine-in only.", reward: "20% off total bill", redemptions: 214, status: "Active" },
+  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", description: "Buy any large pizza and get a second one free.", reward: "Free pizza", redemptions: 98, status: "Active" },
+  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", description: "Spend ₹1000 or more and receive ₹200 cashback to your wallet.", reward: "₹200 cashback", redemptions: 141, status: "Active" },
+  { id: "o4", name: "Family Combo ₹899", type: "Combo", description: "Feeds 4 — 2 mains, 2 sides, 1 dessert, 4 drinks.", reward: "Fixed ₹899 combo", redemptions: 76, status: "Paused" },
 ];
 
 export const reviewRequests = [
