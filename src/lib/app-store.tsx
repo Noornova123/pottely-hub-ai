@@ -69,9 +69,11 @@ type DataCtx = {
 
   socialPosts: SocialPost[];
   addSocialPost: (p: Omit<SocialPost, "id">) => void;
+  updateSocialPost: (id: string, patch: Partial<SocialPost>) => void;
 
   offers: Offer[];
-  launchOffer: (o: Omit<Offer, "id" | "status" | "redemptions">) => void;
+  launchOffer: (o: Partial<Offer> & { name: string; type: string }) => void;
+  updateOffer: (id: string, patch: Partial<Offer>) => void;
 
   staffList: Staff[];
   addStaff: (s: Omit<Staff, "id">) => void;
