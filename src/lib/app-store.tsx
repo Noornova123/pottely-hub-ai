@@ -132,8 +132,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         name: c.name || "New campaign",
         trigger: c.trigger || "Inactive 30 days",
         offer: c.offer || "20% off",
-        matched: 30,
-        status: "Active",
+        message: c.message || "",
+        image: c.image || "",
+        matched: c.matched ?? 30,
+        status: c.status || "Active",
         sent: 0, opened: 0, redeemed: 0, returned: 0,
       };
       setCampaigns((prev) => [nc, ...prev]);
