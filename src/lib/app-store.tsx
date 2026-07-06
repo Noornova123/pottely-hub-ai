@@ -68,7 +68,7 @@ type DataCtx = {
   runCampaign: (id: string) => number;
 
   socialPosts: SocialPost[];
-  addSocialPost: (p: Omit<SocialPost, "id">) => void;
+  addSocialPost: (p: Partial<SocialPost> & { day: string; time: string; channel: string; caption: string; status: string }) => void;
   updateSocialPost: (id: string, patch: Partial<SocialPost>) => void;
 
   offers: Offer[];
