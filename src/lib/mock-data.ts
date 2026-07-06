@@ -157,13 +157,13 @@ export const campaigns = [
 ];
 
 export const socialPosts = [
-  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled" },
-  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled" },
-  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Draft" },
-  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled" },
-  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled" },
-  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled" },
-  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Draft" },
+  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled", image: "", link: "" },
+  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled", image: "", link: "" },
+  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Draft", image: "", link: "" },
+  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled", image: "", link: "" },
+  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled", image: "", link: "" },
+  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled", image: "", link: "" },
+  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Draft", image: "", link: "" },
 ];
 
 export const loyaltyTiers = [
