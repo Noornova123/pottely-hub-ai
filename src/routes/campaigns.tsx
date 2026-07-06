@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { useRef, useState } from "react";
+import { Sparkles, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
@@ -11,10 +11,26 @@ export const Route = createFileRoute("/campaigns")({
 });
 
 const triggers = ["15", "30", "45", "60", "90"];
-const offers = ["Discount", "Free Gift", "Festival Offer", "Birthday Offer"];
+const offerTypes = ["Discount", "Free Gift", "Festival Offer", "Birthday Offer"];
+
+// Mock template gallery — solid-color SVG data URIs so no external assets needed
+function templateSVG(label: string, from: string, to: string) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='${from}'/><stop offset='1' stop-color='${to}'/></linearGradient></defs><rect width='200' height='120' fill='url(%23g)'/><text x='100' y='68' font-family='Inter,sans-serif' font-size='16' font-weight='700' fill='white' text-anchor='middle'>${label}</text></svg>`;
+  return `data:image/svg+xml;utf8,${svg.replace(/#/g, "%23")}`;
+}
+const templates = [
+  { id: "t1", label: "20% OFF", url: templateSVG("20% OFF", "#1F3A5F", "#3B6AA6") },
+  { id: "t2", label: "FREE DESSERT", url: templateSVG("FREE DESSERT", "#C9922B", "#F1C265") },
+  { id: "t3", label: "BOGO", url: templateSVG("BOGO", "#7C3AED", "#EC4899") },
+  { id: "t4", label: "FESTIVAL", url: templateSVG("FESTIVAL", "#DC2626", "#F59E0B") },
+  { id: "t5", label: "BIRTHDAY", url: templateSVG("BIRTHDAY", "#0EA5E9", "#22D3EE") },
+];
 
 function offerText(o: string) {
   return o === "Discount" ? "20% off" : o === "Free Gift" ? "a complimentary dessert" : o === "Birthday Offer" ? "a birthday surprise 🎂" : "a special festival treat 🎉";
+}
+function defaultMessage(o: string) {
+  return `Hi {{name}}, we've missed you! Enjoy ${offerText(o)} on your next visit within 7 days. — Spice Route Kitchen`;
 }
 
 function CampaignsPage() {
@@ -23,10 +39,14 @@ function CampaignsPage() {
   const [name, setName] = useState("");
   const [trigger, setTrigger] = useState("30");
   const [offer, setOffer] = useState("Discount");
+  const [message, setMessage] = useState(defaultMessage("Discount"));
+  const [image, setImage] = useState<string>("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const previewMsg = `Hi {{name}}, we've missed you! Enjoy ${offerText(offer)} on your next visit within 7 days. — Spice Route Kitchen`;
-
-  const resetForm = () => { setEditingId(null); setName(""); setTrigger("30"); setOffer("Discount"); };
+  const resetForm = () => {
+    setEditingId(null); setName(""); setTrigger("30"); setOffer("Discount");
+    setMessage(defaultMessage("Discount")); setImage("");
+  };
 
   const startEdit = (id: string) => {
     const c = campaigns.find((x) => x.id === id);
@@ -35,8 +55,24 @@ function CampaignsPage() {
     setName(c.name);
     const t = c.trigger.match(/\d+/)?.[0] || "30";
     setTrigger(t);
-    const matched = offers.find((o) => c.offer.toLowerCase().includes(o.split(" ")[0].toLowerCase()));
+    const matched = offerTypes.find((o) => c.offer.toLowerCase().includes(o.split(" ")[0].toLowerCase()));
     setOffer(matched || "Discount");
+    setMessage(c.message || defaultMessage(matched || "Discount"));
+    setImage(c.image || "");
+  };
+
+  const pickOffer = (o: string) => {
+    setOffer(o);
+    // Only auto-refill message if user hasn't customized it meaningfully
+    setMessage((prev) => (prev.trim() === "" || offerTypes.some((t) => prev === defaultMessage(t))) ? defaultMessage(o) : prev);
+  };
+
+  const onFile = (f: File | null) => {
+    if (!f) return;
+    if (!f.type.startsWith("image/")) { toast.error("Please pick an image file"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setImage(String(reader.result));
+    reader.readAsDataURL(f);
   };
 
   const submit = () => {
@@ -45,6 +81,8 @@ function CampaignsPage() {
       name: finalName,
       trigger: `Inactive ${trigger} days`,
       offer: offerText(offer),
+      message,
+      image,
     };
     if (editingId) {
       updateCampaign(editingId, payload);
@@ -68,7 +106,14 @@ function CampaignsPage() {
           <CardHeader title="Active campaigns" description="Automated rules currently running" />
           <div className="divide-y divide-border">
             {campaigns.map((c) => (
-              <div key={c.id} className={`p-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] items-center ${editingId === c.id ? "bg-primary/5" : ""}`}>
+              <div key={c.id} className={`p-5 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] items-center ${editingId === c.id ? "bg-primary/5" : ""}`}>
+                {c.image ? (
+                  <img src={c.image} alt="" className="h-14 w-14 rounded-lg object-cover border border-border" />
+                ) : (
+                  <div className="h-14 w-14 rounded-lg bg-muted grid place-items-center text-muted-foreground">
+                    <ImageIcon className="h-5 w-5" />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-semibold">{c.name}</h4>
@@ -78,6 +123,7 @@ function CampaignsPage() {
                     Trigger: <span className="text-foreground font-medium">{c.trigger}</span> · Offer:{" "}
                     <span className="text-foreground font-medium">{c.offer}</span>
                   </p>
+                  {c.message && <p className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">"{c.message}"</p>}
                   <p className="text-xs mt-1"><span className="font-semibold text-primary">{c.matched}</span> customers currently matched</p>
                 </div>
                 <div className="flex gap-2">
@@ -106,16 +152,52 @@ function CampaignsPage() {
             <div>
               <label className="block text-xs font-medium mb-1.5">Offer type</label>
               <div className="grid grid-cols-2 gap-2">
-                {offers.map((o) => (
-                  <button key={o} onClick={() => setOffer(o)}
+                {offerTypes.map((o) => (
+                  <button key={o} onClick={() => pickOffer(o)}
                     className={`text-xs px-3 py-2 rounded-lg border ${offer === o ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>{o}</button>
                 ))}
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5">Preview message</label>
-              <div className="rounded-lg bg-muted/60 p-3 text-sm">{previewMsg}</div>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-y"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Use {"{{name}}"} for personalization.</p>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1.5">Attach image</label>
+              <div className="grid grid-cols-5 gap-2">
+                {templates.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setImage(t.url)}
+                    className={`aspect-square rounded-md overflow-hidden border-2 ${image === t.url ? "border-primary" : "border-transparent"}`}
+                    title={t.label}
+                  >
+                    <img src={t.url} alt={t.label} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="mt-2 w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-dashed border-border text-xs font-semibold"
+              >
+                <Upload className="h-3.5 w-3.5" /> Upload your own photo
+              </button>
+              {image && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img src={image} alt="preview" className="h-12 w-12 rounded-md object-cover border border-border" />
+                  <button onClick={() => setImage("")} className="text-[11px] text-muted-foreground underline">Remove</button>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2">
               {editingId && (
                 <button onClick={resetForm} className="flex-1 h-10 rounded-lg border border-border text-sm font-semibold">Cancel</button>

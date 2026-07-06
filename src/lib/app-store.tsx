@@ -68,10 +68,12 @@ type DataCtx = {
   runCampaign: (id: string) => number;
 
   socialPosts: SocialPost[];
-  addSocialPost: (p: Omit<SocialPost, "id">) => void;
+  addSocialPost: (p: Partial<SocialPost> & { day: string; time: string; channel: string; caption: string; status: string }) => void;
+  updateSocialPost: (id: string, patch: Partial<SocialPost>) => void;
 
   offers: Offer[];
-  launchOffer: (o: Omit<Offer, "id" | "status" | "redemptions">) => void;
+  launchOffer: (o: Partial<Offer> & { name: string; type: string }) => void;
+  updateOffer: (id: string, patch: Partial<Offer>) => void;
 
   staffList: Staff[];
   addStaff: (s: Omit<Staff, "id">) => void;
@@ -132,8 +134,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         name: c.name || "New campaign",
         trigger: c.trigger || "Inactive 30 days",
         offer: c.offer || "20% off",
-        matched: 30,
-        status: "Active",
+        message: c.message || "",
+        image: c.image || "",
+        matched: c.matched ?? 30,
+        status: c.status || "Active",
         sent: 0, opened: 0, redeemed: 0, returned: 0,
       };
       setCampaigns((prev) => [nc, ...prev]);
@@ -153,11 +157,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     socialPosts,
     addSocialPost: (p) =>
-      setSocialPosts((prev) => [...prev, { ...p, id: nextId("p") }]),
+      setSocialPosts((prev) => [...prev, { image: "", link: "", ...p, id: nextId("p") } as SocialPost]),
+    updateSocialPost: (id, patch) =>
+      setSocialPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p))),
 
     offers,
     launchOffer: (o) =>
-      setOffers((prev) => [{ ...o, id: nextId("o"), status: "Active", redemptions: 0 }, ...prev]),
+      setOffers((prev) => [{
+        description: "", reward: "",
+        ...o,
+        id: nextId("o"),
+        status: o.status || "Active",
+        redemptions: o.redemptions ?? 0,
+      }, ...prev]),
+    updateOffer: (id, patch) =>
+      setOffers((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o))),
 
     staffList,
     addStaff: (s) => setStaffList((prev) => [...prev, { ...s, id: nextId("st") }]),

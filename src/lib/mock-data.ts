@@ -115,6 +115,8 @@ export const campaigns = [
     name: "30-day Inactive Winback",
     trigger: "Inactive 30 days",
     offer: "20% off next visit",
+    message: "Hi {{name}}, we've missed you! Enjoy 20% off on your next visit within 7 days. — Spice Route Kitchen",
+    image: "",
     matched: 45,
     status: "Active" as const,
     sent: 320, opened: 214, redeemed: 82, returned: 58,
@@ -124,6 +126,8 @@ export const campaigns = [
     name: "60-day Reactivation",
     trigger: "Inactive 60 days",
     offer: "Free dessert combo",
+    message: "Hi {{name}}, it's been a while! Come back this week for a complimentary dessert combo on us.",
+    image: "",
     matched: 27,
     status: "Active" as const,
     sent: 190, opened: 108, redeemed: 41, returned: 29,
@@ -133,6 +137,8 @@ export const campaigns = [
     name: "90-day Last Chance",
     trigger: "Inactive 90 days",
     offer: "₹300 cashback",
+    message: "Hi {{name}}, we'd love to see you back — ₹300 cashback on your next order above ₹999.",
+    image: "",
     matched: 14,
     status: "Paused" as const,
     sent: 84, opened: 39, redeemed: 12, returned: 8,
@@ -142,6 +148,8 @@ export const campaigns = [
     name: "Birthday Delight",
     trigger: "Birthday this week",
     offer: "Complimentary dessert",
+    message: "Happy birthday {{name}}! 🎂 A complimentary dessert is waiting for you at Spice Route Kitchen.",
+    image: "",
     matched: 12,
     status: "Active" as const,
     sent: 46, opened: 44, redeemed: 31, returned: 28,
@@ -149,13 +157,13 @@ export const campaigns = [
 ];
 
 export const socialPosts = [
-  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled" },
-  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled" },
-  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Draft" },
-  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled" },
-  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled" },
-  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled" },
-  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Draft" },
+  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled", image: "", link: "" },
+  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled", image: "", link: "" },
+  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Draft", image: "", link: "" },
+  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled", image: "", link: "" },
+  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled", image: "", link: "" },
+  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled", image: "", link: "" },
+  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Draft", image: "", link: "" },
 ];
 
 export const loyaltyTiers = [
@@ -166,10 +174,10 @@ export const loyaltyTiers = [
 ];
 
 export const offers = [
-  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", redemptions: 214, status: "Active" },
-  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", redemptions: 98, status: "Active" },
-  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", redemptions: 141, status: "Active" },
-  { id: "o4", name: "Family Combo ₹899", type: "Combo", redemptions: 76, status: "Paused" },
+  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", description: "20% off every Saturday & Sunday, dine-in only.", reward: "20% off total bill", redemptions: 214, status: "Active" },
+  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", description: "Buy any large pizza and get a second one free.", reward: "Free pizza", redemptions: 98, status: "Active" },
+  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", description: "Spend ₹1000 or more and receive ₹200 cashback to your wallet.", reward: "₹200 cashback", redemptions: 141, status: "Active" },
+  { id: "o4", name: "Family Combo ₹899", type: "Combo", description: "Feeds 4 — 2 mains, 2 sides, 1 dessert, 4 drinks.", reward: "Fixed ₹899 combo", redemptions: 76, status: "Paused" },
 ];
 
 export const reviewRequests = [
