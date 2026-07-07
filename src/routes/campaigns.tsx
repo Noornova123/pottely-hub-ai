@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Sparkles, Upload, ImageIcon } from "lucide-react";
+import { Sparkles, Upload, ImageIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui-kit";
 import { useData } from "@/lib/app-store";
+import { AudiencePicker } from "@/components/audience-picker";
 
 export const Route = createFileRoute("/campaigns")({
   component: CampaignsPage,
@@ -13,7 +14,6 @@ export const Route = createFileRoute("/campaigns")({
 const triggers = ["15", "30", "45", "60", "90"];
 const offerTypes = ["Discount", "Free Gift", "Festival Offer", "Birthday Offer"];
 
-// Mock template gallery — solid-color SVG data URIs so no external assets needed
 function templateSVG(label: string, from: string, to: string) {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='${from}'/><stop offset='1' stop-color='${to}'/></linearGradient></defs><rect width='200' height='120' fill='url(%23g)'/><text x='100' y='68' font-family='Inter,sans-serif' font-size='16' font-weight='700' fill='white' text-anchor='middle'>${label}</text></svg>`;
   return `data:image/svg+xml;utf8,${svg.replace(/#/g, "%23")}`;
@@ -41,11 +41,12 @@ function CampaignsPage() {
   const [offer, setOffer] = useState("Discount");
   const [message, setMessage] = useState(defaultMessage("Discount"));
   const [image, setImage] = useState<string>("");
+  const [audience, setAudience] = useState<string[]>(["All customers"]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setEditingId(null); setName(""); setTrigger("30"); setOffer("Discount");
-    setMessage(defaultMessage("Discount")); setImage("");
+    setMessage(defaultMessage("Discount")); setImage(""); setAudience(["All customers"]);
   };
 
   const startEdit = (id: string) => {
@@ -59,11 +60,11 @@ function CampaignsPage() {
     setOffer(matched || "Discount");
     setMessage(c.message || defaultMessage(matched || "Discount"));
     setImage(c.image || "");
+    setAudience(c.audience && c.audience.length ? c.audience : ["All customers"]);
   };
 
   const pickOffer = (o: string) => {
     setOffer(o);
-    // Only auto-refill message if user hasn't customized it meaningfully
     setMessage((prev) => (prev.trim() === "" || offerTypes.some((t) => prev === defaultMessage(t))) ? defaultMessage(o) : prev);
   };
 
@@ -76,6 +77,7 @@ function CampaignsPage() {
   };
 
   const submit = () => {
+    if (audience.length === 0) { toast.error("Pick at least one audience"); return; }
     const finalName = name.trim() || `${trigger}-day ${offer}`;
     const payload = {
       name: finalName,
@@ -83,6 +85,7 @@ function CampaignsPage() {
       offer: offerText(offer),
       message,
       image,
+      audience,
     };
     if (editingId) {
       updateCampaign(editingId, payload);
@@ -95,8 +98,15 @@ function CampaignsPage() {
   };
 
   const handleRun = (id: string) => {
-    const count = runCampaign(id);
-    toast.success(`Campaign sent to ${count} customers`);
+    const c = campaigns.find((x) => x.id === id);
+    if (!c || !c.audience || c.audience.length === 0) {
+      toast.error("Pick an audience for this campaign first"); return;
+    }
+    updateCampaign(id, { runStatus: "Running" });
+    setTimeout(() => {
+      const count = runCampaign(id);
+      toast.success(`Campaign sent to ${count} customers in ${c.audience!.join(", ")}`);
+    }, 400);
   };
 
   return (
@@ -106,7 +116,7 @@ function CampaignsPage() {
           <CardHeader title="Active campaigns" description="Automated rules currently running" />
           <div className="divide-y divide-border">
             {campaigns.map((c) => (
-              <div key={c.id} className={`p-5 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] items-center ${editingId === c.id ? "bg-primary/5" : ""}`}>
+              <div key={c.id} className={`p-5 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] items-start ${editingId === c.id ? "bg-primary/5" : ""}`}>
                 {c.image ? (
                   <img src={c.image} alt="" className="h-14 w-14 rounded-lg object-cover border border-border" />
                 ) : (
@@ -118,17 +128,29 @@ function CampaignsPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-semibold">{c.name}</h4>
                     <Badge tone={c.status === "Active" ? "success" : "warning"}>{c.status}</Badge>
+                    {c.runStatus === "Running" && <Badge tone="warning">Running…</Badge>}
+                    {c.runStatus === "Sent" && <Badge tone="success">Sent</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Trigger: <span className="text-foreground font-medium">{c.trigger}</span> · Offer:{" "}
                     <span className="text-foreground font-medium">{c.offer}</span>
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
+                    <Users className="h-3 w-3" /> To: <span className="text-foreground font-medium">{c.audience?.join(", ") || "—"}</span>
+                  </p>
                   {c.message && <p className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">"{c.message}"</p>}
                   <p className="text-xs mt-1"><span className="font-semibold text-primary">{c.matched}</span> customers currently matched</p>
+                  {c.runStatus === "Sent" && c.results && (
+                    <div className="mt-2 rounded-md bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 px-2.5 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-300">
+                      Sent to <span className="font-semibold">{c.lastRunCount}</span> customers · Delivered: {c.results.delivered} · Opened: {c.results.opened} · Redeemed: {c.results.redeemed}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(c.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border">Edit</button>
-                  <button onClick={() => handleRun(c.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground">Run now</button>
+                  <button onClick={() => handleRun(c.id)} disabled={c.runStatus === "Running"} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground disabled:opacity-60">
+                    {c.runStatus === "Running" ? "Running…" : c.runStatus === "Sent" ? "Run again" : "Run now"}
+                  </button>
                 </div>
               </div>
             ))}
@@ -158,6 +180,9 @@ function CampaignsPage() {
                 ))}
               </div>
             </div>
+
+            <AudiencePicker value={audience} onChange={setAudience} label="To" />
+
             <div>
               <label className="block text-xs font-medium mb-1.5">Preview message</label>
               <textarea
@@ -217,6 +242,7 @@ function CampaignsPage() {
             <thead className="text-left text-xs text-muted-foreground bg-muted/40">
               <tr>
                 <th className="px-5 py-3 font-medium">Campaign</th>
+                <th className="px-5 py-3 font-medium">Sent to</th>
                 <th className="px-5 py-3 font-medium">Sent</th>
                 <th className="px-5 py-3 font-medium">Opened</th>
                 <th className="px-5 py-3 font-medium">Redeemed</th>
@@ -228,6 +254,7 @@ function CampaignsPage() {
               {campaigns.map((c) => (
                 <tr key={c.id} className="border-t border-border">
                   <td className="px-5 py-3 font-medium">{c.name}</td>
+                  <td className="px-5 py-3 text-xs text-muted-foreground">{c.audience?.join(", ") || "—"}</td>
                   <td className="px-5 py-3">{c.sent}</td>
                   <td className="px-5 py-3">{c.opened}</td>
                   <td className="px-5 py-3">{c.redeemed}</td>
