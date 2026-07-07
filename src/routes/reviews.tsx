@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { Star, Sparkles, Download, QrCode } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Star, Sparkles, Download, QrCode, Pencil, X } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
@@ -27,9 +27,15 @@ const draftVariations = [
 ];
 
 function QrTile({
-  id, title, subtitle, value,
-}: { id: string; title: string; subtitle: string; value: string }) {
+  id, title, subtitle, defaultValue,
+}: { id: string; title: string; subtitle: string; defaultValue: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [value, setValue] = useState(defaultValue);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(defaultValue);
+
+  useEffect(() => { setValue(defaultValue); setDraft(defaultValue); }, [defaultValue]);
+
   const download = () => {
     const canvas = wrapRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
     if (!canvas) return;
@@ -40,19 +46,58 @@ function QrTile({
     a.click();
     toast.success("QR downloaded");
   };
+
+  const saveUrl = () => {
+    if (!draft.trim()) { toast.error("Enter a URL"); return; }
+    setValue(draft.trim());
+    setEditing(false);
+    toast.success("QR updated");
+  };
+
   return (
-    <div className="rounded-xl border border-border p-4 flex flex-col items-center text-center">
+    <div className="rounded-xl border border-border p-4 flex flex-col items-center text-center relative">
+      <button
+        onClick={() => setEditing(true)}
+        className="absolute top-2 right-2 p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+        title="Edit URL"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
       <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>
       <div ref={wrapRef} className="mt-3 rounded-lg bg-white p-3">
         <QRCodeCanvas value={value} size={140} level="M" includeMargin={false} />
       </div>
       <div className="mt-3 text-[11px] text-muted-foreground line-clamp-2 break-all">{subtitle}</div>
+      <div className="mt-1 text-[10px] text-muted-foreground line-clamp-1 break-all">{value}</div>
       <button
         onClick={download}
         className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
       >
         <Download className="h-3 w-3" /> Download QR
       </button>
+
+      {editing && (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4" onClick={() => setEditing(false)}>
+          <div className="bg-card rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Edit {title}</h3>
+              <button onClick={() => setEditing(false)}><X className="h-5 w-5" /></button>
+            </div>
+            <label className="block mt-4 text-xs font-medium mb-1">Destination URL</label>
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="https://..."
+              className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+            />
+            <p className="mt-2 text-[11px] text-muted-foreground">The QR code below will encode this URL — scanning it will open this link.</p>
+            <div className="flex gap-2 pt-4">
+              <button onClick={() => setEditing(false)} className="flex-1 h-10 rounded-lg border border-border text-sm font-semibold">Cancel</button>
+              <button onClick={saveUrl} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Save & regenerate</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -112,17 +157,17 @@ function ReviewsPage() {
       <Card className="mt-6">
         <CardHeader
           title="Printable QR codes"
-          description="Print these for your counter, tables or receipts"
+          description="Tap the pencil to point a QR at your real link"
           action={<QrCode className="h-4 w-4 text-primary" />}
         />
         <CardBody className="grid gap-4 sm:grid-cols-3">
-          <QrTile id="google-review" title="Google Review QR" subtitle="Opens your Google review page" value={googleUrl} />
-          <QrTile id="social" title="Social Media QR" subtitle={`Follow on Instagram — @${bizSlug}`} value={socialUrl} />
+          <QrTile id="google-review" title="Google Review QR" subtitle="Opens your Google review page" defaultValue={googleUrl} />
+          <QrTile id="social" title="Social Media QR" subtitle={`Follow on Instagram — @${bizSlug}`} defaultValue={socialUrl} />
           <QrTile
             id="offer"
             title="Offer QR"
             subtitle={featuredOffer ? `Active offer: ${featuredOffer.name}` : "No active offer"}
-            value={offerUrl}
+            defaultValue={offerUrl}
           />
         </CardBody>
       </Card>

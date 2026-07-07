@@ -76,6 +76,58 @@ export interface Customer {
   history: { date: string; item: string; amount: number }[];
 }
 
+export interface Campaign {
+  id: string;
+  name: string;
+  trigger: string;
+  offer: string;
+  message: string;
+  image: string;
+  matched: number;
+  status: "Active" | "Paused";
+  sent: number;
+  opened: number;
+  redeemed: number;
+  returned: number;
+  audience?: string[];
+  runStatus?: "Idle" | "Running" | "Sent";
+  lastRunCount?: number;
+  results?: { delivered: number; opened: number; redeemed: number };
+}
+
+export type SocialPostStatus = "Scheduled" | "Posted" | "Failed";
+
+export interface SocialPost {
+  id: string;
+  day: string;
+  time: string;
+  channel: "Instagram" | "Facebook";
+  caption: string;
+  status: SocialPostStatus;
+  image: string;
+  link: string;
+  versions?: string[];
+  audience?: string[];
+}
+
+export interface Offer {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  reward: string;
+  redemptions: number;
+  status: "Active" | "Paused";
+  audience?: string[];
+}
+
+export interface Segment {
+  id: string;
+  name: string;
+  ruleType: "visits" | "spend";
+  threshold: number;
+}
+
 const firstNames = ["Aarav", "Meera", "Rohan", "Isha", "Vikram", "Priya", "Kabir", "Ananya", "Dev", "Sara", "Arjun", "Zoya", "Manav", "Riya", "Neel", "Tara"];
 const lastNames = ["Sharma", "Patel", "Iyer", "Khan", "Reddy", "Menon", "Gupta", "Nair", "Bose", "Kapoor"];
 const statuses: CustomerStatus[] = ["New", "Active", "VIP", "Inactive", "Lost"];
@@ -109,7 +161,7 @@ export const customers: Customer[] = Array.from({ length: 24 }, (_, i) => {
   };
 });
 
-export const campaigns = [
+export const campaigns: Campaign[] = [
   {
     id: "cam1",
     name: "30-day Inactive Winback",
@@ -118,8 +170,10 @@ export const campaigns = [
     message: "Hi {{name}}, we've missed you! Enjoy 20% off on your next visit within 7 days. — Spice Route Kitchen",
     image: "",
     matched: 45,
-    status: "Active" as const,
+    status: "Active",
     sent: 320, opened: 214, redeemed: 82, returned: 58,
+    audience: ["All customers"],
+    runStatus: "Idle",
   },
   {
     id: "cam2",
@@ -129,8 +183,10 @@ export const campaigns = [
     message: "Hi {{name}}, it's been a while! Come back this week for a complimentary dessert combo on us.",
     image: "",
     matched: 27,
-    status: "Active" as const,
+    status: "Active",
     sent: 190, opened: 108, redeemed: 41, returned: 29,
+    audience: ["Gold"],
+    runStatus: "Idle",
   },
   {
     id: "cam3",
@@ -140,8 +196,10 @@ export const campaigns = [
     message: "Hi {{name}}, we'd love to see you back — ₹300 cashback on your next order above ₹999.",
     image: "",
     matched: 14,
-    status: "Paused" as const,
+    status: "Paused",
     sent: 84, opened: 39, redeemed: 12, returned: 8,
+    audience: ["New / Uncategorized customers"],
+    runStatus: "Idle",
   },
   {
     id: "cam4",
@@ -151,19 +209,21 @@ export const campaigns = [
     message: "Happy birthday {{name}}! 🎂 A complimentary dessert is waiting for you at Spice Route Kitchen.",
     image: "",
     matched: 12,
-    status: "Active" as const,
+    status: "Active",
     sent: 46, opened: 44, redeemed: 31, returned: 28,
+    audience: ["VIP", "Gold"],
+    runStatus: "Idle",
   },
 ];
 
-export const socialPosts = [
-  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled", image: "", link: "" },
-  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled", image: "", link: "" },
-  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Draft", image: "", link: "" },
-  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled", image: "", link: "" },
-  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled", image: "", link: "" },
-  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled", image: "", link: "" },
-  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Draft", image: "", link: "" },
+export const socialPosts: SocialPost[] = [
+  { id: "p1", day: "Mon", time: "10:00", channel: "Instagram", caption: "Weekend brunch is back — pillowy pancakes & bottomless chai ☕", status: "Scheduled", image: "", link: "", versions: [] },
+  { id: "p2", day: "Tue", time: "18:30", channel: "Facebook", caption: "Tuesday Tandoor Nights — 20% off starters after 7pm.", status: "Scheduled", image: "", link: "", versions: [] },
+  { id: "p3", day: "Wed", time: "12:00", channel: "Instagram", caption: "Meet Chef Rohan — the mind behind our monsoon menu.", status: "Posted", image: "", link: "", versions: [] },
+  { id: "p4", day: "Thu", time: "19:00", channel: "Instagram", caption: "Diwali Feast preview — book your table now.", status: "Scheduled", image: "", link: "", versions: [] },
+  { id: "p5", day: "Fri", time: "13:00", channel: "Facebook", caption: "Family lunch combo — feeds 4 at ₹899.", status: "Scheduled", image: "", link: "", versions: [] },
+  { id: "p6", day: "Sat", time: "20:00", channel: "Instagram", caption: "Weekend vibes with live acoustic sets 🎸", status: "Scheduled", image: "", link: "", versions: [] },
+  { id: "p7", day: "Sun", time: "11:00", channel: "Instagram", caption: "Sunday brunch — bring the family, we'll bring the mimosas.", status: "Scheduled", image: "", link: "", versions: [] },
 ];
 
 export const loyaltyTiers = [
@@ -173,11 +233,17 @@ export const loyaltyTiers = [
   { tier: "VIP", visits: 25, reward: "20% off + chef's tasting invite", members: 52, color: "bg-primary/10 text-primary" },
 ];
 
-export const offers = [
-  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", description: "20% off every Saturday & Sunday, dine-in only.", reward: "20% off total bill", redemptions: 214, status: "Active" },
-  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", description: "Buy any large pizza and get a second one free.", reward: "Free pizza", redemptions: 98, status: "Active" },
-  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", description: "Spend ₹1000 or more and receive ₹200 cashback to your wallet.", reward: "₹200 cashback", redemptions: 141, status: "Active" },
-  { id: "o4", name: "Family Combo ₹899", type: "Combo", description: "Feeds 4 — 2 mains, 2 sides, 1 dessert, 4 drinks.", reward: "Fixed ₹899 combo", redemptions: 76, status: "Paused" },
+export const segments: Segment[] = [
+  { id: "seg-gold", name: "Gold", ruleType: "visits", threshold: 8 },
+  { id: "seg-vip", name: "VIP", ruleType: "visits", threshold: 15 },
+  { id: "seg-high-spenders", name: "High Spenders", ruleType: "spend", threshold: 10000 },
+];
+
+export const offers: Offer[] = [
+  { id: "o1", name: "Weekend 20% off", type: "Flat Discount", description: "20% off every Saturday & Sunday, dine-in only.", reward: "20% off total bill", redemptions: 214, status: "Active", audience: ["All customers"] },
+  { id: "o2", name: "Buy 1 Pizza Get 1", type: "BOGO", description: "Buy any large pizza and get a second one free.", reward: "Free pizza", redemptions: 98, status: "Active", audience: ["Gold"] },
+  { id: "o3", name: "₹200 Cashback on ₹1000", type: "Cashback", description: "Spend ₹1000 or more and receive ₹200 cashback to your wallet.", reward: "₹200 cashback", redemptions: 141, status: "Active", audience: ["High Spenders"] },
+  { id: "o4", name: "Family Combo ₹899", type: "Combo", description: "Feeds 4 — 2 mains, 2 sides, 1 dessert, 4 drinks.", reward: "Fixed ₹899 combo", redemptions: 76, status: "Paused", audience: ["All customers"] },
 ];
 
 export const reviewRequests = [

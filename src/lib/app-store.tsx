@@ -7,9 +7,19 @@ import {
   staff as seedStaff,
   reviewRequests as seedReviewRequests,
   plans as seedPlans,
+  segments as seedSegments,
   business as seedBusiness,
   type Customer,
+  type Campaign,
+  type SocialPost,
+  type Offer,
+  type Segment,
 } from "@/lib/mock-data";
+
+export type { Campaign, SocialPost, Offer, Segment };
+export type Staff = (typeof seedStaff)[number];
+export type ReviewRequest = (typeof seedReviewRequests)[number];
+export type Plan = (typeof seedPlans)[number];
 
 // ---------- Auth ----------
 type AuthUser = { email: string; name: string };
@@ -49,14 +59,14 @@ export function useAuth() {
   return ctx;
 }
 
-// ---------- Data ----------
-export type Campaign = (typeof seedCampaigns)[number];
-export type SocialPost = (typeof seedSocialPosts)[number];
-export type Offer = (typeof seedOffers)[number];
-export type Staff = (typeof seedStaff)[number];
-export type ReviewRequest = (typeof seedReviewRequests)[number];
-export type Plan = (typeof seedPlans)[number];
+// ---------- Helpers ----------
+export function countMatching(customers: Customer[], seg: Segment): number {
+  return customers.filter((c) =>
+    seg.ruleType === "visits" ? c.visits >= seg.threshold : c.totalSpend >= seg.threshold
+  ).length;
+}
 
+// ---------- Data ----------
 type DataCtx = {
   customers: Customer[];
   addCustomer: (c: Partial<Customer> & { name: string }) => Customer;
@@ -68,12 +78,18 @@ type DataCtx = {
   runCampaign: (id: string) => number;
 
   socialPosts: SocialPost[];
-  addSocialPost: (p: Partial<SocialPost> & { day: string; time: string; channel: string; caption: string; status: string }) => void;
+  addSocialPost: (p: Partial<SocialPost> & { day: string; time: string; channel: "Instagram" | "Facebook"; caption: string; status: SocialPost["status"] }) => SocialPost;
   updateSocialPost: (id: string, patch: Partial<SocialPost>) => void;
+  deleteSocialPost: (id: string) => void;
 
   offers: Offer[];
   launchOffer: (o: Partial<Offer> & { name: string; type: string }) => void;
   updateOffer: (id: string, patch: Partial<Offer>) => void;
+
+  segments: Segment[];
+  addSegment: (s: Omit<Segment, "id">) => Segment;
+  updateSegment: (id: string, patch: Partial<Segment>) => void;
+  deleteSegment: (id: string) => void;
 
   staffList: Staff[];
   addStaff: (s: Omit<Staff, "id">) => void;
@@ -97,6 +113,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(seedCampaigns);
   const [socialPosts, setSocialPosts] = useState<SocialPost[]>(seedSocialPosts);
   const [offers, setOffers] = useState<Offer[]>(seedOffers);
+  const [segments, setSegments] = useState<Segment[]>(seedSegments);
   const [staffList, setStaffList] = useState<Staff[]>(seedStaff);
   const [reviewRequests, setReviewRequests] = useState<ReviewRequest[]>(seedReviewRequests);
   const [plans, setPlans] = useState<Plan[]>(seedPlans);
@@ -139,6 +156,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         matched: c.matched ?? 30,
         status: c.status || "Active",
         sent: 0, opened: 0, redeemed: 0, returned: 0,
+        audience: c.audience || ["All customers"],
+        runStatus: c.runStatus || "Idle",
       };
       setCampaigns((prev) => [nc, ...prev]);
       return nc;
@@ -150,28 +169,58 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setCampaigns((prev) => prev.map((c) => {
         if (c.id !== id) return c;
         count = c.matched || 45;
-        return { ...c, sent: c.sent + count };
+        const delivered = Math.max(0, count - Math.round(count * 0.05));
+        const opened = Math.round(delivered * 0.62);
+        const redeemed = Math.round(opened * 0.34);
+        return {
+          ...c,
+          sent: c.sent + count,
+          runStatus: "Sent",
+          lastRunCount: count,
+          results: { delivered, opened, redeemed },
+        };
       }));
       return count;
     },
 
     socialPosts,
-    addSocialPost: (p) =>
-      setSocialPosts((prev) => [...prev, { image: "", link: "", ...p, id: nextId("p") } as SocialPost]),
+    addSocialPost: (p) => {
+      const np: SocialPost = {
+        id: nextId("p"),
+        image: "", link: "", versions: [],
+        ...p,
+      };
+      setSocialPosts((prev) => [...prev, np]);
+      return np;
+    },
     updateSocialPost: (id, patch) =>
       setSocialPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p))),
+    deleteSocialPost: (id) =>
+      setSocialPosts((prev) => prev.filter((p) => p.id !== id)),
 
     offers,
     launchOffer: (o) =>
       setOffers((prev) => [{
         description: "", reward: "",
+        audience: o.audience || ["All customers"],
         ...o,
         id: nextId("o"),
         status: o.status || "Active",
         redemptions: o.redemptions ?? 0,
-      }, ...prev]),
+      } as Offer, ...prev]),
     updateOffer: (id, patch) =>
       setOffers((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o))),
+
+    segments,
+    addSegment: (s) => {
+      const ns: Segment = { id: nextId("seg"), ...s };
+      setSegments((prev) => [...prev, ns]);
+      return ns;
+    },
+    updateSegment: (id, patch) =>
+      setSegments((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+    deleteSegment: (id) =>
+      setSegments((prev) => prev.filter((s) => s.id !== id)),
 
     staffList,
     addStaff: (s) => setStaffList((prev) => [...prev, { ...s, id: nextId("st") }]),
