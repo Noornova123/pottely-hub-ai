@@ -15,6 +15,8 @@ import {
   type Offer,
   type Segment,
 } from "@/lib/mock-data";
+import { supabase } from "@/lib/supabase";
+import type { Session, User } from "@supabase/supabase-js";
 
 export type { Campaign, SocialPost, Offer, Segment };
 export type Staff = (typeof seedStaff)[number];
@@ -22,35 +24,53 @@ export type ReviewRequest = (typeof seedReviewRequests)[number];
 export type Plan = (typeof seedPlans)[number];
 
 // ---------- Auth ----------
-type AuthUser = { email: string; name: string };
 type AuthCtx = {
-  user: AuthUser | null;
-  login: (email: string, password: string) => void;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
 };
 const AuthContext = createContext<AuthCtx | null>(null);
-const AUTH_KEY = "pottely.auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(AUTH_KEY);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
-  const value = useMemo<AuthCtx>(() => ({
+
+  const value: AuthCtx = {
     user,
-    login: (email) => {
-      const u = { email, name: email.split("@")[0] || "Owner" };
-      setUser(u);
-      try { window.localStorage.setItem(AUTH_KEY, JSON.stringify(u)); } catch {}
+    session,
+    loading,
+    signUp: async (email, password) => {
+      const { error } = await supabase.auth.signUp({ email, password });
+      return { error: error?.message ?? null };
     },
-    logout: () => {
-      setUser(null);
-      try { window.localStorage.removeItem(AUTH_KEY); } catch {}
+    login: async (email, password) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error?.message ?? null };
     },
-  }), [user]);
+    logout: async () => {
+      await supabase.auth.signOut();
+    },
+  };
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
