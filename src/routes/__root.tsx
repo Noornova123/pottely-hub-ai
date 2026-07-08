@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -11,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider, DataProvider } from "@/lib/app-store";
+import { AuthProvider, DataProvider, useAuth } from "@/lib/app-store";
 import { Toaster } from "sonner";
 
 function NotFoundComponent() {
@@ -121,10 +122,33 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <DataProvider>
-          <Outlet />
+          <AuthGate>
+            <Outlet />
+          </AuthGate>
           <Toaster position="top-right" richColors />
         </DataProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function AuthGate({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/auth";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user && !isAuthPage) {
+    if (typeof window !== "undefined") window.location.href = "/auth";
+    return null;
+  }
+
+  return <>{children}</>;
 }
