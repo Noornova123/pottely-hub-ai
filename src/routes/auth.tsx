@@ -12,12 +12,13 @@ const categories = ["Restaurant", "Salon", "Clinic", "Gym", "Retail", "Other"];
 
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("demo@pottely.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, loading, login, signUp } = useAuth();
 
-  if (user) return <Navigate to="/" />;
+  if (!loading && user) return <Navigate to="/" />;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -78,15 +79,32 @@ function AuthPage() {
 
           <form
             className="mt-8 space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (!email || !password) {
                 toast.error("Enter an email and password");
                 return;
               }
-              login(email, password);
-              toast.success(mode === "login" ? "Welcome back!" : "Account created");
-              navigate({ to: "/" });
+              setSubmitting(true);
+              if (mode === "signup") {
+                const { error } = await signUp(email, password);
+                setSubmitting(false);
+                if (error) {
+                  toast.error(error);
+                  return;
+                }
+                toast.success("Account created! Check your email to confirm, then sign in.");
+                setMode("login");
+              } else {
+                const { error } = await login(email, password);
+                setSubmitting(false);
+                if (error) {
+                  toast.error(error);
+                  return;
+                }
+                toast.success("Welcome back!");
+                navigate({ to: "/" });
+              }
             }}
           >
             {mode === "signup" && (
@@ -112,15 +130,12 @@ function AuthPage() {
               value={password} onChange={(e) => setPassword(e.target.value)}
             />
 
-            <p className="text-[11px] text-muted-foreground">
-              Demo mode — any email &amp; password combo works.
-            </p>
-
             <button
               type="submit"
-              className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+              disabled={submitting}
+              className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {mode === "login" ? "Sign in" : "Create account"}
+              {submitting ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
             </button>
           </form>
 
