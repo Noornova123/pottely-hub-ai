@@ -135,7 +135,7 @@ function RootComponent() {
 function AuthGate({ children }: { children: ReactNode }) {
   const { user, status, loading } = useAuth();
   const location = useLocation();
-  const isAuthPage = location.pathname === "/auth";
+  const isAuthPage = location.pathname === "/auth" || location.pathname === "/admin";
 
   if (loading) {
     return (
