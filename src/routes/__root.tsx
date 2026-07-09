@@ -133,7 +133,7 @@ function RootComponent() {
 }
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, status, loading } = useAuth();
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth";
 
@@ -148,6 +148,33 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (!user && !isAuthPage) {
     if (typeof window !== "undefined") window.location.href = "/auth";
     return null;
+  }
+
+  if (user && !isAuthPage && status === "pending") {
+    return (
+      <div className="min-h-screen grid place-items-center px-4">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-2xl font-bold">Your account is pending approval</h1>
+          <p className="text-sm text-muted-foreground">
+            Thanks for signing up! Our team is reviewing your account and will activate it
+            within 24 hours. You'll be able to access your dashboard once approved.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !isAuthPage && status === "rejected") {
+    return (
+      <div className="min-h-screen grid place-items-center px-4">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-2xl font-bold">Account not approved</h1>
+          <p className="text-sm text-muted-foreground">
+            Your account request was not approved. Please contact support for more details.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
