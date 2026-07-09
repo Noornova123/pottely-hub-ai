@@ -21,8 +21,12 @@ const statusTone: Record<CustomerStatus, "success" | "default" | "gold" | "warni
 
 type FormShape = {
   name: string; phone: string; email: string; birthday: string; anniversary: string;
+  totalSpend: string; visits: string; status: CustomerStatus; tier: LoyaltyTier; points: string; notes: string;
 };
-const emptyForm: FormShape = { name: "", phone: "", email: "", birthday: "", anniversary: "" };
+const emptyForm: FormShape = {
+  name: "", phone: "", email: "", birthday: "", anniversary: "",
+  totalSpend: "0", visits: "0", status: "New", tier: "Silver", points: "0", notes: "",
+};
 
 function CustomersPage() {
   const { customers, addCustomer, updateCustomer } = useData();
@@ -36,7 +40,11 @@ function CustomersPage() {
   useEffect(() => {
     if (showForm?.mode === "edit") {
       const c = customers.find((x) => x.id === showForm.id);
-      if (c) setForm({ name: c.name, phone: c.phone, email: c.email, birthday: c.birthday, anniversary: c.anniversary });
+      if (c) setForm({
+        name: c.name, phone: c.phone, email: c.email, birthday: c.birthday, anniversary: c.anniversary,
+        totalSpend: String(c.totalSpend), visits: String(c.visits), status: c.status, tier: c.tier,
+        points: String(c.points), notes: c.notes,
+      });
     } else if (showForm?.mode === "add") {
       setForm(emptyForm);
     }
@@ -53,11 +61,17 @@ function CustomersPage() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error("Name is required"); return; }
+    const payload = {
+      ...form,
+      totalSpend: Number(form.totalSpend) || 0,
+      visits: Number(form.visits) || 0,
+      points: Number(form.points) || 0,
+    };
     if (showForm?.mode === "edit") {
-      updateCustomer(showForm.id, form);
+      updateCustomer(showForm.id, payload);
       toast.success(`Updated ${form.name}`);
     } else {
-      addCustomer(form);
+      addCustomer(payload);
       toast.success(`${form.name} added to customers`);
     }
     setShowForm(null);
@@ -191,7 +205,7 @@ function CustomersPage() {
               <h3 className="font-bold text-lg">{showForm.mode === "edit" ? "Edit customer" : "Add customer"}</h3>
               <button onClick={() => setShowForm(null)}><X className="h-5 w-5" /></button>
             </div>
-            <form className="mt-4 space-y-3" onSubmit={submit}>
+            <form className="mt-4 space-y-3 max-h-[70vh] overflow-y-auto pr-1" onSubmit={submit}>
               {(["name","phone","email","birthday","anniversary"] as const).map((f) => (
                 <div key={f}>
                   <label className="block text-xs font-medium mb-1 capitalize">{f}</label>
@@ -202,6 +216,65 @@ function CustomersPage() {
                   />
                 </div>
               ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Total Spend (₹)</label>
+                  <input
+                    type="number"
+                    value={form.totalSpend}
+                    onChange={(e) => setForm({ ...form, totalSpend: e.target.value })}
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Visits</label>
+                  <input
+                    type="number"
+                    value={form.visits}
+                    onChange={(e) => setForm({ ...form, visits: e.target.value })}
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Status</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as CustomerStatus })}
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                  >
+                    {["New", "Active", "VIP", "Inactive", "Lost"].map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Loyalty Tier</label>
+                  <select
+                    value={form.tier}
+                    onChange={(e) => setForm({ ...form, tier: e.target.value as LoyaltyTier })}
+                    className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                  >
+                    {["Silver", "Gold", "Platinum", "VIP"].map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Points</label>
+                <input
+                  type="number"
+                  value={form.points}
+                  onChange={(e) => setForm({ ...form, points: e.target.value })}
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Notes</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  className="w-full h-20 rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                />
+              </div>
               <button type="submit" className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm mt-2">
                 {showForm.mode === "edit" ? "Save changes" : "Save Customer"}
               </button>
