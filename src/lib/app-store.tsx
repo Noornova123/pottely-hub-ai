@@ -24,9 +24,11 @@ export type ReviewRequest = (typeof seedReviewRequests)[number];
 export type Plan = (typeof seedPlans)[number];
 
 // ---------- Auth ----------
+type ProfileStatus = "pending" | "approved" | "rejected";
 type AuthCtx = {
   user: User | null;
   session: Session | null;
+  status: ProfileStatus | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -37,18 +39,34 @@ const AuthContext = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [status, setStatus] = useState<ProfileStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfileStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", userId)
+      .single();
+    setStatus((data?.status as ProfileStatus) ?? "pending");
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      if (data.session?.user) await fetchProfileStatus(data.session.user.id);
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
+      if (newSession?.user) {
+        await fetchProfileStatus(newSession.user.id);
+      } else {
+        setStatus(null);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -57,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthCtx = {
     user,
     session,
+    status,
     loading,
     signUp: async (email, password) => {
       const { error } = await supabase.auth.signUp({ email, password });
@@ -78,7 +97,6 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth outside AuthProvider");
   return ctx;
 }
-
 // ---------- Helpers ----------
 export function countMatching(customers: Customer[], seg: Segment): number {
   return customers.filter((c) =>
