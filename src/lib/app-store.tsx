@@ -145,9 +145,41 @@ const DataContext = createContext<DataCtx | null>(null);
 
 let idCounter = 1000;
 const nextId = (prefix: string) => `${prefix}${++idCounter}`;
+// Supabase row (snake_case) ko Customer type (camelCase) mein convert karta hai
+function fromDbCustomer(row: any): Customer {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    email: row.email,
+    birthday: row.birthday,
+    anniversary: row.anniversary,
+    lastVisit: row.last_visit,
+    totalSpend: row.total_spend,
+    visits: row.visits,
+    status: row.status,
+    tier: row.tier,
+    points: row.points,
+    notes: row.notes,
+    history: row.history || [],
+  };
+}
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [customers, setCustomers] = useState<Customer[]>(seedCustomers);
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("customers")
+      .select("*")
+      .eq("business_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data) setCustomers(data.map(fromDbCustomer));
+      });
+  }, [user]);
   const [campaigns, setCampaigns] = useState<Campaign[]>(seedCampaigns);
   const [socialPosts, setSocialPosts] = useState<SocialPost[]>(seedSocialPosts);
   const [offers, setOffers] = useState<Offer[]>(seedOffers);
@@ -158,7 +190,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [business, setBusiness] = useState(seedBusiness);
 
   const value: DataCtx = {
-    customers,
+   customers,
     addCustomer: (c) => {
       const nc: Customer = {
         id: nextId("c"),
@@ -177,11 +209,57 @@ export function DataProvider({ children }: { children: ReactNode }) {
         history: [],
       };
       setCustomers((prev) => [nc, ...prev]);
+      if (user) {
+        supabase
+          .from("customers")
+          .insert({
+            business_id: user.id,
+            name: nc.name,
+            phone: nc.phone,
+            email: nc.email,
+            birthday: nc.birthday,
+            anniversary: nc.anniversary,
+            last_visit: nc.lastVisit,
+            total_spend: nc.totalSpend,
+            visits: nc.visits,
+            status: nc.status,
+            tier: nc.tier,
+            points: nc.points,
+            notes: nc.notes,
+            history: nc.history,
+          })
+          .select()
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              setCustomers((prev) =>
+                prev.map((c) => (c.id === nc.id ? fromDbCustomer(data) : c))
+              );
+            }
+          });
+      }
       return nc;
     },
-    updateCustomer: (id, patch) =>
-      setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c))),
-
+    updateCustomer: (id, patch) => {
+      setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+      const dbPatch: any = {};
+      if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.phone !== undefined) dbPatch.phone = patch.phone;
+      if (patch.email !== undefined) dbPatch.email = patch.email;
+      if (patch.birthday !== undefined) dbPatch.birthday = patch.birthday;
+      if (patch.anniversary !== undefined) dbPatch.anniversary = patch.anniversary;
+      if (patch.lastVisit !== undefined) dbPatch.last_visit = patch.lastVisit;
+      if (patch.totalSpend !== undefined) dbPatch.total_spend = patch.totalSpend;
+      if (patch.visits !== undefined) dbPatch.visits = patch.visits;
+      if (patch.status !== undefined) dbPatch.status = patch.status;
+      if (patch.tier !== undefined) dbPatch.tier = patch.tier;
+      if (patch.points !== undefined) dbPatch.points = patch.points;
+      if (patch.notes !== undefined) dbPatch.notes = patch.notes;
+      if (patch.history !== undefined) dbPatch.history = patch.history;
+      if (Object.keys(dbPatch).length > 0) {
+        supabase.from("customers").update(dbPatch).eq("id", id);
+      }
+    },
     campaigns,
     addCampaign: (c) => {
       const nc: Campaign = {
