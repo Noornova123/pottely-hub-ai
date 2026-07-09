@@ -153,7 +153,13 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (user && !isAuthPage && status === "pending") {
     return (
       <div className="min-h-screen grid place-items-center px-4">
-        <div className="max-w-md text-center space-y-3">
+        <div className="max-w-md text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground font-black">
+              P
+            </div>
+            <span className="text-xl font-bold tracking-tight">POTTELY</span>
+          </div>
           <h1 className="text-2xl font-bold">Your account is pending approval</h1>
           <p className="text-sm text-muted-foreground">
             Thanks for signing up! Our team is reviewing your account and will activate it
@@ -163,7 +169,6 @@ function AuthGate({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
   if (user && !isAuthPage && status === "rejected") {
     return (
       <div className="min-h-screen grid place-items-center px-4">
