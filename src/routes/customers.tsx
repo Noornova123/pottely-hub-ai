@@ -34,6 +34,7 @@ function CustomersPage() {
   const [status, setStatus] = useState<"All" | CustomerStatus>("All");
   const [tier, setTier] = useState<"All" | LoyaltyTier>("All");
   const [selected, setSelected] = useState<Customer | null>(null);
+  const [purchaseForm, setPurchaseForm] = useState({ item: "", amount: "" });
   const [showForm, setShowForm] = useState<null | { mode: "add" } | { mode: "edit"; id: string }>(null);
   const [form, setForm] = useState<FormShape>(emptyForm);
 
@@ -184,6 +185,54 @@ function CustomersPage() {
                   </div>
                 ))}
               </div>
+              <form
+                className="mt-3 grid grid-cols-3 gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!purchaseForm.item.trim() || !purchaseForm.amount) {
+                    toast.error("Item and amount required");
+                    return;
+                  }
+                  const amount = Number(purchaseForm.amount) || 0;
+                  const dateLabel = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+                  const newHistory = [{ date: dateLabel, item: purchaseForm.item, amount }, ...selected.history];
+                  updateCustomer(selected.id, {
+                    history: newHistory,
+                    totalSpend: selected.totalSpend + amount,
+                    visits: selected.visits + 1,
+                    lastVisit: "Just now",
+                  });
+                  setSelected({
+                    ...selected,
+                    history: newHistory,
+                    totalSpend: selected.totalSpend + amount,
+                    visits: selected.visits + 1,
+                    lastVisit: "Just now",
+                  });
+                  setPurchaseForm({ item: "", amount: "" });
+                  toast.success("Purchase added");
+                }}
+              >
+                <input
+                  placeholder="Item (e.g. Lunch combo)"
+                  value={purchaseForm.item}
+                  onChange={(e) => setPurchaseForm({ ...purchaseForm, item: e.target.value })}
+                  className="col-span-2 h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="₹ amount"
+                  value={purchaseForm.amount}
+                  onChange={(e) => setPurchaseForm({ ...purchaseForm, amount: e.target.value })}
+                  className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="col-span-3 h-9 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
+                >
+                  Add purchase
+                </button>
+              </form>
             </Section>
             <Section title="Notes">
               <p className="text-sm text-muted-foreground">{selected.notes || "No notes yet."}</p>
