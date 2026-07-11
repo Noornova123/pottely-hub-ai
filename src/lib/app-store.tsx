@@ -179,7 +179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .then(({ data, error }) => {
         if (!error && data) setCustomers(data.map(fromDbCustomer));
       });
-  }, [user]);
+  }, [user?.id]);
   const [campaigns, setCampaigns] = useState<Campaign[]>(seedCampaigns);
   const [socialPosts, setSocialPosts] = useState<SocialPost[]>(seedSocialPosts);
   const [offers, setOffers] = useState<Offer[]>(seedOffers);
@@ -256,8 +256,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (patch.points !== undefined) dbPatch.points = patch.points;
       if (patch.notes !== undefined) dbPatch.notes = patch.notes;
       if (patch.history !== undefined) dbPatch.history = patch.history;
-      if (Object.keys(dbPatch).length > 0) {
-        supabase.from("customers").update(dbPatch).eq("id", id);
+     if (Object.keys(dbPatch).length > 0) {
+        supabase.from("customers").update(dbPatch).eq("id", id).then(({ error }) => {
+          if (error) console.error("Update failed:", error.message);
+        });
       }
     },
     campaigns,
